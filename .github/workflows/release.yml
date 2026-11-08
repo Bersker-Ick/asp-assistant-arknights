@@ -31,6 +31,7 @@ jobs:
           dotnet publish src/ASPAssistant.App/ASPAssistant.App.csproj `
             -c Release -r win-x64 --self-contained true `
             -p:Version=${{ env.VERSION }} `
+            -p:DebugType=None -p:DebugSymbols=false `
             -o publish/win-x64
       - name: Trim symbols and unused runtimes
         shell: pwsh
@@ -63,8 +64,15 @@ jobs:
           }
           Compress-Archive -Path publish/win-x64/* `
             -DestinationPath "publish/ASPAssistant-${{ github.ref_name }}-win-x64.zip"
+          $zip = "publish/ASPAssistant-${{ github.ref_name }}-win-x64.zip"
+          $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $([IO.Path]::GetFileName($zip))" | Set-Content -LiteralPath "publish/SHA256SUMS.txt" -Encoding ascii
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: publish/ASPAssistant-${{ github.ref_name }}-win-x64.zip
-          generate_release_notes: true
+          name: ${{ github.ref_name }} · 卫戍协议规程适配版
+          body_path: RELEASE_NOTES.md
+          files: |
+            publish/ASPAssistant-${{ github.ref_name }}-win-x64.zip
+            publish/SHA256SUMS.txt
+          fail_on_unmatched_files: true

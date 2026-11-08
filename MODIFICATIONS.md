@@ -69,6 +69,7 @@
 
 - `NOTICE`、`MODIFICATIONS.md`：上游归属与修改说明。
 - `LICENSE.upstream`：与上游原 `LICENSE` 内容逐字相同的副本。
+- `RELEASE_NOTES.md`：首版独立运行包的下载、使用、功能、限制与许可证说明。
 - `.gitattributes`：固定文本换行，按二进制处理图标和 OCR 模型。
 - `docs/images/`：使用测试数据生成的界面截图，不包含实际游戏或个人桌面画面。
 - `data/icons/equipment/一次性促销券.png`

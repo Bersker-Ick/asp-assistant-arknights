@@ -93,7 +93,16 @@ ASP Assistant 是运行于《明日方舟》游戏窗口旁的侧边辅助工具
 
 ## 获取与构建
 
-当前仓库提供源码。将来发布的 Windows 压缩包可在 [Releases](https://github.com/bingyunhe/ASP_Assistant-Regulation/releases) 获取。
+无需编译的 Windows x64 独立运行包可在 [Releases](https://github.com/bingyunhe/ASP_Assistant-Regulation/releases/latest) 获取。
+
+1. 下载 `ASPAssistant-v1.0.0-win-x64.zip`，不要选择 `Source code` 源码压缩包。
+2. 右键“全部解压”到独立目录，保留全部文件和 `data`、`runtimes` 文件夹。
+3. 双击 `ASPAssistant.App.exe` 启动。无需另外安装 .NET；包内带有识别模型和所需运行库。
+4. 更新时先退出旧程序，再解压新版。个人追踪与阵容设置存放于本机用户数据目录。
+
+发布页同时提供 `SHA256SUMS.txt`，可用 `Get-FileHash .\ASPAssistant-v1.0.0-win-x64.zip -Algorithm SHA256` 核对下载完整性。详细说明见 [首版发行说明](RELEASE_NOTES.md)。
+
+如果需要从源码构建：
 
 安装 .NET 8 SDK 后，在 PowerShell 中运行：
 
@@ -114,6 +123,8 @@ dotnet publish src/ASPAssistant.App/ASPAssistant.App.csproj -c Release --self-co
 # 生成 Windows x64 独立版本
 dotnet publish src/ASPAssistant.App/ASPAssistant.App.csproj -c Release -r win-x64 --self-contained true -o publish/win-x64
 ```
+
+维护者更新发行说明后，推送 `v` 开头的版本标签即可触发 `.github/workflows/release.yml`。该流程先运行测试，再构建独立运行包、打包运行库与许可证，生成校验文件并发布到 GitHub Releases。
 
 ## 更新游戏数据
 
