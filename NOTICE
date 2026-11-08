@@ -1,0 +1,21 @@
+ASP Assistant · Regulation Edition
+
+This project is a modified derivative of ASP Assistant:
+https://github.com/Moonfair/ASP_Assistant
+Upstream author: Moonfair and upstream contributors.
+Upstream revision: 93b2ba8514f6591a67e4cbf5a6169dee7d065bf6
+
+The upstream project is distributed under the Apache License, Version 2.0.
+The original LICENSE and source attribution notices are retained.
+
+Modifications copyright (c) 2026 ASP Assistant Regulation contributors.
+This distribution contains modifications for the Regulation season, interface,
+themes, tracking, equipment comparison, tests, documentation and release setup.
+See MODIFICATIONS.md for the modification date and affected files.
+This derivative is not an official release from the upstream author.
+
+MaaFramework and other third-party dependencies retain their own licenses.
+Game data, character names and artwork retain the rights and attribution of
+their respective owners; the software license does not relicense these assets.
+Data and image source references are retained in data/fetch_spdatabase.py.
+This project is not affiliated with or endorsed by Hypergryph / 鹰角网络.

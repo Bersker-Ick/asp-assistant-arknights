@@ -1,0 +1,61 @@
+using ASPAssistant.Core.Data;
+using ASPAssistant.Core.Models;
+using ASPAssistant.Core.ViewModels;
+using FluentAssertions;
+
+namespace ASPAssistant.Tests.Data;
+
+public class RegulationDataTests
+{
+    private readonly JsonDataStore _store = new(Path.Combine(
+        AppContext.BaseDirectory, "TestData", "Regulation"));
+
+    [Fact]
+    public async Task Operators_LoadRegulationCovenantsAndTraits()
+    {
+        var operators = await _store.LoadOperatorsAsync();
+
+        operators.Should().HaveCount(141);
+        operators.Should().OnlyHaveUniqueItems(o => o.Name);
+        operators.Single(o => o.Name == "塔露拉").CoreCovenants.Should().Contain("乌萨斯");
+        operators.Single(o => o.Name == "车尔尼").CoreCovenants.Should().Contain("莱塔尼亚");
+        operators.Single(o => o.Name == "艾丽妮").CoreCovenants.Should().Contain("伊比利亚");
+        operators.Should().OnlyContain(o => o.Normal.Traits.Count > 0 && o.Elite.Traits.Count > 0);
+    }
+
+    [Fact]
+    public async Task Equipment_NewHammerCanBeFoundByJobChangeFilter()
+    {
+        var operators = await _store.LoadOperatorsAsync();
+        var (equipment, jobChangeNames) = await _store.LoadEquipmentAsync();
+        var (_, mappings) = await _store.LoadCovenantsAsync();
+        var viewModel = new EquipmentBrowseViewModel();
+        viewModel.LoadEquipment(equipment,
+            operators.SelectMany(o => o.CoreCovenants.Concat(o.AdditionalCovenants)), jobChangeNames, mappings);
+        viewModel.SelectedTypeFilter = "转职";
+        viewModel.SearchText = "电流维式重锤";
+
+        equipment.Should().HaveCount(70);
+        viewModel.FilteredEquipment.Should().ContainSingle(e => e.Name == "电流维式重锤");
+        viewModel.FilteredEquipment.Single().Type.Should().Be(EquipmentType.JobChange);
+        viewModel.FilteredEquipment.Single().JobChangeCovenant.Should().Be("维多利亚");
+        equipment.Where(e => e.Type == EquipmentType.JobChange).Should().HaveCount(24)
+            .And.OnlyContain(e => e.JobChangeCovenant.Length > 0);
+        equipment.Single(e => e.Name == "坚守盾牌").JobChangeCovenant.Should().Be("坚守");
+        equipment.Should().OnlyContain(e => !e.Normal.EffectDescription.Contains("<$")
+            && !e.Normal.EffectDescription.Contains("\\n"));
+    }
+
+    [Fact]
+    public async Task Covenants_LoadAggregationThresholdAndEquipmentMappings()
+    {
+        var (covenants, equipmentMappings) = await _store.LoadCovenantsAsync();
+
+        covenants.Should().HaveCount(25);
+        covenants.Single(c => c.Name == "聚合").ActivateCount.Should().Be(2);
+        covenants.Single(c => c.Name == "莱塔尼亚").BondType.Should().Be("SEASON");
+        equipmentMappings["电流维式重锤"].Should().Be("维多利亚");
+        equipmentMappings["终极维式重锤"].Should().Be("维多利亚");
+        equipmentMappings["炎国短刀"].Should().Be("炎");
+    }
+}

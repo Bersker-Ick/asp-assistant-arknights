@@ -1,0 +1,396 @@
+<!-- Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md. -->
+<UserControl x:Class="ASPAssistant.App.Views.OperatorBrowseView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:ASPAssistant.App.Controls"
+             xmlns:converters="clr-namespace:ASPAssistant.App.Converters"
+             xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+             Background="{DynamicResource PanelBackgroundBrush}">
+    <UserControl.Resources>
+        <converters:NullToStringConverter x:Key="NullToAll" />
+        <converters:TierToRomanConverter x:Key="TierToRoman" />
+        <converters:CovenantHighlightConverter x:Key="CovenantHighlight" />
+        <Style x:Key="CovenantFilterItem" TargetType="ListBoxItem" BasedOn="{StaticResource FilterChipItem}">
+            <Setter Property="Tag">
+                <Setter.Value>
+                    <MultiBinding Converter="{StaticResource CovenantHighlight}" Mode="OneWay">
+                        <Binding />
+                        <Binding Path="DataContext.HighlightedCovenants"
+                                 RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                    </MultiBinding>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <CollectionViewSource x:Key="OperatorsByTier" Source="{Binding FilteredOperators}">
+            <CollectionViewSource.SortDescriptions>
+                <componentModel:SortDescription PropertyName="Tier" Direction="Ascending" />
+            </CollectionViewSource.SortDescriptions>
+            <CollectionViewSource.GroupDescriptions>
+                <PropertyGroupDescription PropertyName="Tier" />
+            </CollectionViewSource.GroupDescriptions>
+        </CollectionViewSource>
+    </UserControl.Resources>
+    <DockPanel>
+        <!-- Search box -->
+        <Border DockPanel.Dock="Top" Margin="8,8,8,4"
+                Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1" CornerRadius="6">
+            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     Background="Transparent" Foreground="{DynamicResource TextPrimaryBrush}"
+                     BorderThickness="0" Padding="8,5"
+                     CaretBrush="{DynamicResource AccentBrush}" />
+        </Border>
+
+        <!-- Filter panel: two-row Grid — header row (toggle + tags) above content row (lists).
+             No overlay: tags fill the DockPanel remainder, toggle is always protected on the left. -->
+        <Grid DockPanel.Dock="Top" Margin="8,0,8,4">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition x:Name="FilterContentRow" Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Row 0: "筛选" toggle (left) + active filter tag chips (fills right) -->
+            <DockPanel Grid.Row="0" LastChildFill="True">
+                <ToggleButton x:Name="FilterToggle" DockPanel.Dock="Left"
+                              Foreground="{DynamicResource TextSecondaryBrush}"
+                              FontSize="12" Padding="0,4,12,4">
+                    <ToggleButton.Style>
+                        <Style TargetType="ToggleButton" BasedOn="{StaticResource ClickableToggleButtonBase}">
+                            <Setter Property="Content" Value="▶ 筛选" />
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="BorderThickness" Value="0" />
+                            <Setter Property="HorizontalContentAlignment" Value="Left" />
+                            <Setter Property="VerticalContentAlignment" Value="Top" />
+                            <!-- Custom template: no hover/press color changes -->
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <ContentPresenter HorizontalAlignment="Left"
+                                                          VerticalAlignment="Top"
+                                                          Margin="{TemplateBinding Padding}" />
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter Property="Content" Value="▼ 筛选" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ToggleButton.Style>
+                </ToggleButton>
+
+                <ItemsControl x:Name="FilterTagsControl"
+                              ItemsSource="{Binding ActiveFilterTags}"
+                              HorizontalAlignment="Right">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel HorizontalAlignment="Right" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Border Padding="7,2" Margin="0,0,3,2"
+                                        Background="{DynamicResource AccentTintBrush}"
+                                        BorderBrush="{DynamicResource AccentBrush}"
+                                        BorderThickness="1" CornerRadius="10">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding}" Value="|">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding}" FontSize="11"
+                                               Foreground="{DynamicResource AccentBrush}" />
+                                </Border>
+                                <TextBlock Text="|" FontSize="11" Margin="1,0,3,2"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding}" Value="|">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </DockPanel>
+
+            <!-- Row 1: Filter lists — shown only when FilterToggle is checked -->
+            <StackPanel x:Name="FilterContentPanel" Grid.Row="1"
+                        ClipToBounds="True" Margin="0,6,0,2">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsChecked, ElementName=FilterToggle}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+
+                <!-- Availability filter (ban status) — always at top -->
+                <DockPanel Margin="0,0,0,4">
+                    <TextBlock DockPanel.Dock="Left" Text="本局状态"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="11" />
+                    <Button DockPanel.Dock="Right" x:Name="ClearHighlightsButton"
+                            Content="清除高亮" FontSize="11" Padding="8,2" Margin="6,0,0,0"
+                            Background="{DynamicResource AvailableTintBrush}"
+                            Foreground="{DynamicResource AvailableBrush}"
+                            BorderBrush="{DynamicResource AvailableBrush}" BorderThickness="1"
+                            Click="OnClearHighlightsClicked">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource ClickableButtonBase}">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="highlightButton" CornerRadius="4"
+                                                    Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="highlightButton" Property="Opacity" Value="0.85" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="highlightButton" Property="Opacity" Value="0.65" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button DockPanel.Dock="Right" x:Name="ClearBansButton"
+                            Content="清除ban位" FontSize="11"
+                            Padding="8,2" Margin="6,0,0,0"
+                            HorizontalAlignment="Right"
+                            Click="OnClearBansClicked">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource ClickableButtonBase}">
+                                <Setter Property="Background" Value="{DynamicResource DangerTintBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                <Setter Property="BorderBrush" Value="{DynamicResource DangerBorderBrush}" />
+                                <Setter Property="BorderThickness" Value="1" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="4"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource DangerBorderBrush}" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource DangerPressedBrush}" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button DockPanel.Dock="Right" x:Name="ManualScanButton"
+                            Content="截屏录入" FontSize="11"
+                            Padding="8,2" Margin="6,0,0,0"
+                            HorizontalAlignment="Right"
+                            Click="OnManualScanClicked">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource ClickableButtonBase}">
+                                <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}" />
+                                <Setter Property="Foreground" Value="#FF4FC3F7" />
+                                <Setter Property="BorderBrush" Value="{DynamicResource AccentBorderBrush}" />
+                                <Setter Property="BorderThickness" Value="1" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="4"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource AccentBorderBrush}" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource AccentPressedBrush}" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <TextBlock x:Name="ManualScanStatusText"
+                               DockPanel.Dock="Right"
+                               FontSize="11" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               Margin="4,0,0,0"
+                               Visibility="Collapsed" />
+                </DockPanel>
+                <ListBox x:Name="AvailabilityFilterList"
+                         Style="{StaticResource FilterChipListBox}"
+                         Margin="0,0,0,6"
+                         SelectionChanged="OnAvailabilityFilterChanged">
+                    <ListBoxItem Content="全部" />
+                    <ListBoxItem Content="本局可用" />
+                    <ListBoxItem Content="本局不可用" />
+                </ListBox>
+
+                <TextBlock Text="等阶" Foreground="{DynamicResource TextSecondaryBrush}"
+                           FontSize="11" Margin="0,0,0,4" />
+                <ListBox x:Name="TierFilterList"
+                         Style="{StaticResource FilterChipListBox}"
+                         ItemsSource="{Binding AvailableTiers}"
+                         PreviewMouseLeftButtonDown="OnFilterListPreviewMouseDown"
+                         SelectionChanged="OnTierFilterChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource NullToAll}, ConverterParameter=全部}"
+                                       FontSize="11" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <TextBlock Text="核心盟约" Foreground="{DynamicResource TextSecondaryBrush}"
+                           FontSize="11" Margin="0,6,0,4" />
+                <ListBox x:Name="CoreCovenantFilterList"
+                         SelectionMode="Multiple"
+                         Style="{StaticResource FilterChipListBox}"
+                         ItemContainerStyle="{StaticResource CovenantFilterItem}"
+                         ItemsSource="{Binding AvailableCoreCovenants}"
+                         PreviewMouseLeftButtonDown="OnCoreCovenantPreviewMouseDown"
+                         SelectionChanged="OnCovenantFilterChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource NullToAll}, ConverterParameter=全部}"
+                                       FontSize="11" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <TextBlock Text="其他盟约" Foreground="{DynamicResource TextSecondaryBrush}"
+                           FontSize="11" Margin="0,6,0,4" />
+                <ListBox x:Name="OtherCovenantFilterList"
+                         SelectionMode="Multiple"
+                         Style="{StaticResource FilterChipListBox}"
+                         ItemContainerStyle="{StaticResource CovenantFilterItem}"
+                         ItemsSource="{Binding AvailableOtherCovenants}"
+                         PreviewMouseLeftButtonDown="OnOtherCovenantPreviewMouseDown"
+                         SelectionChanged="OnCovenantFilterChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource NullToAll}, ConverterParameter=全部}"
+                                       FontSize="11" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <TextBlock Text="词条" Foreground="{DynamicResource TextSecondaryBrush}"
+                           FontSize="11" Margin="0,6,0,4" />
+                <ListBox x:Name="TraitFilterList"
+                         Style="{StaticResource FilterChipListBox}"
+                         ItemsSource="{Binding AvailableTraitTypes}"
+                         PreviewMouseLeftButtonDown="OnFilterListPreviewMouseDown"
+                         SelectionChanged="OnTraitFilterChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource NullToAll}, ConverterParameter=全部}"
+                                       FontSize="11" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <TextBlock Text="触发时机" Foreground="{DynamicResource TextSecondaryBrush}"
+                           FontSize="11" Margin="0,6,0,4" />
+                <ListBox x:Name="TriggerTimingFilterList"
+                         Style="{StaticResource FilterChipListBox}"
+                         ItemsSource="{Binding AvailableTriggerTimings}"
+                         PreviewMouseLeftButtonDown="OnFilterListPreviewMouseDown"
+                         SelectionChanged="OnTriggerTimingFilterChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource NullToAll}, ConverterParameter=全部}"
+                                       FontSize="11" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+        </Grid>
+
+        <!-- Operator list (virtualized: ScrollViewer lives inside the template so WPF can recycle cards) -->
+        <ItemsControl x:Name="OperatorListControl" ItemsSource="{Binding Source={StaticResource OperatorsByTier}}"
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling"
+                      VirtualizingPanel.ScrollUnit="Pixel">
+            <ItemsControl.Template>
+                <ControlTemplate TargetType="ItemsControl">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  CanContentScroll="True"
+                                  Focusable="False">
+                        <ItemsPresenter Margin="8,0,8,8" />
+                    </ScrollViewer>
+                </ControlTemplate>
+            </ItemsControl.Template>
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.HeaderTemplate>
+                        <DataTemplate>
+                            <Border Background="{DynamicResource SectionBackgroundBrush}" CornerRadius="3" Padding="6,5" Margin="0,6,0,4">
+                                <TextBlock HorizontalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"
+                                           FontSize="12" FontWeight="SemiBold">
+                                    <Run Text="{Binding Name, Mode=OneWay, Converter={StaticResource TierToRoman}}" /><Run Text=" 阶" />
+                                </TextBlock>
+                            </Border>
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>
+                    <GroupStyle.Panel>
+                        <ItemsPanelTemplate><VirtualizingStackPanel /></ItemsPanelTemplate>
+                    </GroupStyle.Panel>
+                </GroupStyle>
+            </ItemsControl.GroupStyle>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <controls:OperatorCard TrackingToggled="OnOperatorTrackingToggled"
+                                          controls:OperatorCard.BanToggled="OnOperatorBanToggled" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </DockPanel>
+</UserControl>

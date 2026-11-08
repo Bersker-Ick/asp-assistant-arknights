@@ -1,0 +1,183 @@
+# Modifications / 修改说明
+
+本项目是基于 [Moonfair/ASP_Assistant](https://github.com/Moonfair/ASP_Assistant) 修改的独立衍生版本，不是原作者发布的版本。
+
+- 上游基线：`93b2ba8514f6591a67e4cbf5a6169dee7d065bf6`。
+- 修改日期：2026-11-09。
+- 保留上游 Apache License 2.0 及原有版权、来源和第三方归属声明。
+- 本次以清理后的源码快照建立新仓库；不包含本机 Git 历史、日志、个人配置或用户数据。
+
+## 主要改动
+
+- 更新卫戍协议·规程·序列 I 的干员、装备、盟约数据与缺失图标。
+- 干员列表压缩显示头像和盟约，悬停展示普通/精锐详情。
+- 修正五个页面宽度、筛选布局与悬停延迟；滚动时保留筛选展开状态。
+- 本局可用盟约高亮与清除高亮；支持黑白主题及主题记忆。
+- 多队伍合并追踪；追踪干员复用缩略头像、盟约与悬停详情。
+- 装备名称置顶、合并普通/精锐数值并高亮、显示无精锐及转职盟约，修复等阶“全部”。
+- 更新服务仅关联本仓库的 GitHub Releases；移除原作者 OSS 与 Pages 下载发布依赖。
+- 补充数据、视图模型、WPF 布局与主题回归验证；更新说明、排除规则及发布包中的许可证。
+
+## 修改的上游文件
+
+以下文件均相对上述上游基线作过修改。源码和构建文件还包含文件内变更声明，JSON 根对象包含 `_modificationNotice` 元数据。
+
+- `README.md` — 重写本衍生版本说明及上游署名。
+- `.github/workflows/release.yml`
+- `.gitignore`
+- `data/covenants.json`
+- `data/equipment.json`
+- `data/fetch_spdatabase.py`
+- `data/operators.json`
+- `src/ASPAssistant.App/ASPAssistant.App.csproj`
+- `src/ASPAssistant.App/App.xaml`
+- `src/ASPAssistant.App/App.xaml.cs`
+- `src/ASPAssistant.App/Controls/EquipmentCard.xaml`
+- `src/ASPAssistant.App/Controls/EquipmentCard.xaml.cs`
+- `src/ASPAssistant.App/Controls/OperatorCard.xaml`
+- `src/ASPAssistant.App/Controls/OperatorCard.xaml.cs`
+- `src/ASPAssistant.App/Resources/Styles.xaml`
+- `src/ASPAssistant.App/Views/EnemyView.xaml`
+- `src/ASPAssistant.App/Views/EquipmentBrowseView.xaml`
+- `src/ASPAssistant.App/Views/EquipmentBrowseView.xaml.cs`
+- `src/ASPAssistant.App/Views/LineupListView.xaml`
+- `src/ASPAssistant.App/Views/OperatorBrowseView.xaml`
+- `src/ASPAssistant.App/Views/OperatorBrowseView.xaml.cs`
+- `src/ASPAssistant.App/Views/TrackingView.xaml`
+- `src/ASPAssistant.App/Views/TrackingView.xaml.cs`
+- `src/ASPAssistant.App/Windows/InputDialog.xaml`
+- `src/ASPAssistant.App/Windows/LineupEditorWindow.xaml`
+- `src/ASPAssistant.App/Windows/LineupEditorWindow.xaml.cs`
+- `src/ASPAssistant.App/Windows/SidePanelWindow.xaml`
+- `src/ASPAssistant.App/Windows/SidePanelWindow.xaml.cs`
+- `src/ASPAssistant.App/Windows/SimplePickerDialog.xaml`
+- `src/ASPAssistant.App/Windows/UpdateDialog.xaml`
+- `src/ASPAssistant.Core/Data/SettingsManager.cs`
+- `src/ASPAssistant.Core/Models/Equipment.cs`
+- `src/ASPAssistant.Core/Services/UpdateService.cs`
+- `src/ASPAssistant.Core/ViewModels/EquipmentBrowseViewModel.cs`
+- `src/ASPAssistant.Core/ViewModels/OperatorBrowseViewModel.cs`
+- `src/ASPAssistant.Core/ViewModels/TrackingViewModel.cs`
+- `src/ASPAssistant.Tests/ASPAssistant.Tests.csproj`
+- `src/ASPAssistant.Tests/Data/SettingsManagerTests.cs`
+- `src/ASPAssistant.Tests/Services/WindowTrackerServiceTests.cs`
+- `src/ASPAssistant.Tests/ViewModels/OperatorBrowseViewModelTests.cs`
+- `src/ASPAssistant.Tests/ViewModels/TrackingViewModelTests.cs`
+
+## 新增文件
+
+- `NOTICE`、`MODIFICATIONS.md`：上游归属与修改说明。
+- `.gitattributes`：固定文本换行，按二进制处理图标和 OCR 模型。
+- `docs/images/`：使用测试数据生成的界面截图，不包含实际游戏或个人桌面画面。
+- `data/icons/equipment/一次性促销券.png`
+- `data/icons/equipment/不退者之盾.png`
+- `data/icons/equipment/不退者力场.png`
+- `data/icons/equipment/不退者卫护系统.png`
+- `data/icons/equipment/乌萨斯呼吸器.png`
+- `data/icons/equipment/人事部记录.png`
+- `data/icons/equipment/伊比利亚骨刺刀.png`
+- `data/icons/equipment/佣兵名牌.png`
+- `data/icons/equipment/动能加速器.png`
+- `data/icons/equipment/动能单手弩.png`
+- `data/icons/equipment/动能轰击弩.png`
+- `data/icons/equipment/卫戍推荐信.png`
+- `data/icons/equipment/可靠怀表.png`
+- `data/icons/equipment/多功能补剂.png`
+- `data/icons/equipment/天马之耀.png`
+- `data/icons/equipment/定期存折.png`
+- `data/icons/equipment/投机骰子.png`
+- `data/icons/equipment/汲取者之喙.png`
+- `data/icons/equipment/汲取者之心.png`
+- `data/icons/equipment/汲取者之镰.png`
+- `data/icons/equipment/灵巧涡轮手套.png`
+- `data/icons/equipment/瓶装烈性反应.png`
+- `data/icons/equipment/电流维式重锤.png`
+- `data/icons/equipment/终极维式重锤.png`
+- `data/icons/equipment/聚合急救箱.png`
+- `data/icons/equipment/莱塔尼亚小鼓.png`
+- `data/icons/equipment/虹彩活血饮料.png`
+- `data/icons/equipment/雪祀之衣.png`
+- `data/icons/equipment/驮兽储蓄罐.png`
+- `data/icons/equipment/驱逐者瓦斯.png`
+- `data/icons/equipment/驱逐者警棍.png`
+- `data/icons/equipment/驱逐者防暴装备.png`
+- `data/icons/operators/Miss.Christine.png`
+- `data/icons/operators/Mon3tr.png`
+- `data/icons/operators/W.png`
+- `data/icons/operators/乌啾.png`
+- `data/icons/operators/乌有.png`
+- `data/icons/operators/云迹.png`
+- `data/icons/operators/伊桑.png`
+- `data/icons/operators/克莱门莎.png`
+- `data/icons/operators/冻河.png`
+- `data/icons/operators/卡达.png`
+- `data/icons/operators/历阵锐枪芬.png`
+- `data/icons/operators/可露希尔.png`
+- `data/icons/operators/吉星.png`
+- `data/icons/operators/塔露拉.png`
+- `data/icons/operators/复奏.png`
+- `data/icons/operators/夏栎.png`
+- `data/icons/operators/夜莺.png`
+- `data/icons/operators/奥尔佳.png`
+- `data/icons/operators/奥斯塔.png`
+- `data/icons/operators/安哲拉.png`
+- `data/icons/operators/帕拉斯.png`
+- `data/icons/operators/怒潮凛冬.png`
+- `data/icons/operators/慕斯.png`
+- `data/icons/operators/承曦格雷伊.png`
+- `data/icons/operators/折光.png`
+- `data/icons/operators/拜松.png`
+- `data/icons/operators/摆渡人.png`
+- `data/icons/operators/斥罪.png`
+- `data/icons/operators/旅骨.png`
+- `data/icons/operators/星极.png`
+- `data/icons/operators/星源.png`
+- `data/icons/operators/机械师.png`
+- `data/icons/operators/杰克.png`
+- `data/icons/operators/极光.png`
+- `data/icons/operators/棘刺.png`
+- `data/icons/operators/森蚺.png`
+- `data/icons/operators/水灯心.png`
+- `data/icons/operators/海沫.png`
+- `data/icons/operators/涤火杰西卡.png`
+- `data/icons/operators/淬羽赫默.png`
+- `data/icons/operators/渡桥.png`
+- `data/icons/operators/温蒂.png`
+- `data/icons/operators/灰喉.png`
+- `data/icons/operators/烈夏.png`
+- `data/icons/operators/白铁.png`
+- `data/icons/operators/真理.png`
+- `data/icons/operators/真言.png`
+- `data/icons/operators/矩.png`
+- `data/icons/operators/维伊.png`
+- `data/icons/operators/罗比菈塔.png`
+- `data/icons/operators/老鲤.png`
+- `data/icons/operators/艾丽妮.png`
+- `data/icons/operators/艾雅法拉.png`
+- `data/icons/operators/蓝毒.png`
+- `data/icons/operators/薇薇安娜.png`
+- `data/icons/operators/褐果.png`
+- `data/icons/operators/贝洛内.png`
+- `data/icons/operators/赫德雷.png`
+- `data/icons/operators/赫拉格.png`
+- `data/icons/operators/车尔尼.png`
+- `data/icons/operators/逻各斯.png`
+- `data/icons/operators/遥.png`
+- `data/icons/operators/酒神.png`
+- `data/icons/operators/铸铁.png`
+- `data/icons/operators/阿米娅.png`
+- `data/icons/operators/陨星.png`
+- `data/icons/operators/霍尔海雅.png`
+- `data/icons/operators/霜叶.png`
+- `data/icons/operators/青枳.png`
+- `data/icons/operators/风絮.png`
+- `data/icons/operators/鸿雪.png`
+- `data/icons/operators/黍.png`
+- `data/icons/operators/黑键.png`
+- `src/ASPAssistant.App/Converters/CovenantHighlightConverter.cs`
+- `src/ASPAssistant.App/Converters/TrackedOperatorConverter.cs`
+- `src/ASPAssistant.App/Resources/Themes/Dark.xaml`
+- `src/ASPAssistant.App/Resources/Themes/Light.xaml`
+- `src/ASPAssistant.App/ThemeManager.cs`
+- `src/ASPAssistant.Tests/Data/RegulationDataTests.cs`
+- `src/ASPAssistant.Tests/Views/ThemeAndHighlightTests.cs`

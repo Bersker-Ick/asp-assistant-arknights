@@ -1,0 +1,793 @@
+{
+  "_modificationNotice": "Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md.",
+  "manualJobChangeEquipments": [
+    "维式重锤",
+    "战栗维式重锤",
+    "萨尔贡浓茶",
+    "叙拉古正装",
+    "炎国短刀",
+    "阿戈尔重刃",
+    "坚固维式重锤",
+    "加速维式重锤",
+    "乌萨斯呼吸器",
+    "伊比利亚骨刺刀",
+    "卡西米尔竞技旗",
+    "灼燃维式重锤",
+    "莱塔尼亚小鼓",
+    "谢拉格不融冰",
+    "电流维式重锤",
+    "终极维式重锤"
+  ],
+  "equipment": [
+    {
+      "name": "维式重锤",
+      "iconPath": "icons/equipment/维式重锤.png",
+      "tier": 1,
+      "normal": {
+        "effectDescription": "攻击力+15%"
+      },
+      "elite": {
+        "effectDescription": "攻击力+25%"
+      }
+    },
+    {
+      "name": "坚守盾牌",
+      "iconPath": "icons/equipment/坚守盾牌.png",
+      "tier": 1,
+      "normal": {
+        "effectDescription": "防御力+20%"
+      },
+      "elite": {
+        "effectDescription": "防御力+35%"
+      }
+    },
+    {
+      "name": "盟约之币",
+      "iconPath": "icons/equipment/盟约之币.png",
+      "tier": 1,
+      "normal": {
+        "effectDescription": "装备时销毁，并获得1资金"
+      },
+      "elite": {
+        "effectDescription": "装备时销毁，并获得2资金"
+      }
+    },
+    {
+      "name": "随身身份牌",
+      "iconPath": "icons/equipment/随身身份牌.png",
+      "tier": 1,
+      "normal": {
+        "effectDescription": "装备时销毁，并使携带者所属盟约层数+3（无需激活盟约）"
+      },
+      "elite": {
+        "effectDescription": "装备时销毁，并使携带者所属盟约层数+6（无需激活盟约）"
+      }
+    },
+    {
+      "name": "源石溶剂",
+      "iconPath": "icons/equipment/源石溶剂.png",
+      "tier": 1,
+      "normal": {
+        "effectDescription": "携带者每秒流失60点生命值，攻击力+40%"
+      },
+      "elite": {
+        "effectDescription": "携带者每秒流失60点生命值，攻击力+60%"
+      }
+    },
+    {
+      "name": "虹彩活血饮料",
+      "iconPath": "icons/equipment/虹彩活血饮料.png",
+      "tier": 1,
+      "normal": {
+        "effectDescription": "携带者无法被治疗，每秒回复75点生命值"
+      },
+      "elite": {
+        "effectDescription": "携带者无法被治疗，每秒回复150点生命值"
+      }
+    },
+    {
+      "name": "雪祀之衣",
+      "iconPath": "icons/equipment/雪祀之衣.png",
+      "tier": 1,
+      "normal": {
+        "effectDescription": "生命上限+15%，使携带者更不容易受到攻击且阻挡数-1"
+      },
+      "elite": {
+        "effectDescription": "生命上限+25%，使携带者更不容易受到攻击且阻挡数-1"
+      }
+    },
+    {
+      "name": "不屈弹射器",
+      "iconPath": "icons/equipment/不屈弹射器.png",
+      "tier": 2,
+      "normal": {
+        "effectDescription": "再部署时间-30%，生命上限-30%"
+      },
+      "elite": {
+        "effectDescription": "再部署时间-50%，生命上限-30%"
+      }
+    },
+    {
+      "name": "紧急调度券",
+      "iconPath": "icons/equipment/紧急调度券.png",
+      "tier": 2,
+      "normal": {
+        "effectDescription": "装备时销毁，随机获取当前调度中心内的1名干员（调度中心中对应干员消失）"
+      },
+      "elite": {
+        "effectDescription": "装备时销毁，随机获取当前调度中心内的2名干员（调度中心中对应干员消失）"
+      }
+    },
+    {
+      "name": "战栗维式重锤",
+      "iconPath": "icons/equipment/战栗维式重锤.png",
+      "tier": 2,
+      "normal": {
+        "effectDescription": "攻击力+20%；若携带者是地面干员则攻击时有10%概率使目标战栗2秒"
+      },
+      "elite": {
+        "effectDescription": "攻击力+35%；若携带者是地面干员则攻击时有10%概率使目标战栗2秒"
+      }
+    },
+    {
+      "name": "萨尔贡浓茶",
+      "iconPath": "icons/equipment/萨尔贡浓茶.png",
+      "tier": 2,
+      "normal": {
+        "effectDescription": "技力自然回复速度+0.15/秒"
+      },
+      "elite": {
+        "effectDescription": "技力自然回复速度+0.25/秒"
+      }
+    },
+    {
+      "name": "精打细算玩偶",
+      "iconPath": "icons/equipment/精打细算玩偶.png",
+      "tier": 2,
+      "normal": {
+        "effectDescription": "装备时销毁，之后每回合开始时额外获得1资金"
+      },
+      "elite": {
+        "effectDescription": "装备时销毁，之后每回合开始时额外获得2资金"
+      }
+    },
+    {
+      "name": "简易通讯机",
+      "iconPath": "icons/equipment/简易通讯机.png",
+      "tier": 2,
+      "normal": {
+        "effectDescription": "装备时销毁，随机获得1名拥有该干员第一盟约的干员"
+      },
+      "elite": {
+        "effectDescription": "装备时销毁，随机获得2名拥有该干员第一盟约的干员"
+      }
+    },
+    {
+      "name": "见钱眼开玩偶",
+      "iconPath": "icons/equipment/见钱眼开玩偶.png",
+      "tier": 2,
+      "normal": {
+        "effectDescription": "装备时销毁，下回合额外获得2资金"
+      },
+      "elite": {
+        "effectDescription": "装备时销毁，下回合额外获得4资金"
+      }
+    },
+    {
+      "name": "卫戍推荐信",
+      "iconPath": "icons/equipment/卫戍推荐信.png",
+      "tier": 2,
+      "normal": {
+        "effectDescription": "休整期结束时，使携带者所属的已激活盟约层数+1"
+      },
+      "elite": {
+        "effectDescription": "休整期结束时，使携带者所属的已激活盟约层数+2"
+      }
+    },
+    {
+      "name": "聚合急救箱",
+      "iconPath": "icons/equipment/聚合急救箱.png",
+      "tier": 2,
+      "normal": {
+        "effectDescription": "攻击范围内每个友方干员首次生命值低于50%时，立刻治疗其35%最大生命值"
+      },
+      "elite": {
+        "effectDescription": "攻击范围内每个友方干员首次生命值低于50%时，立刻治疗其50%最大生命值"
+      }
+    },
+    {
+      "name": "灵巧涡轮手套",
+      "iconPath": "icons/equipment/灵巧涡轮手套.png",
+      "tier": 2,
+      "normal": {
+        "effectDescription": "部署后每秒攻击速度+2（最多叠加20次），受到伤害时失去该效果"
+      },
+      "elite": {
+        "effectDescription": "部署后每秒攻击速度+3（最多叠加20次），受到伤害时失去该效果"
+      }
+    },
+    {
+      "name": "叙拉古正装",
+      "iconPath": "icons/equipment/叙拉古正装.png",
+      "tier": 3,
+      "normal": {
+        "effectDescription": "攻击速度+15，携带者部署方向左右两侧的我方干员攻击速度+10"
+      },
+      "elite": {
+        "effectDescription": "攻击速度+25，携带者部署方向左右两侧的我方干员攻击速度+15"
+      }
+    },
+    {
+      "name": "精准狙击镜",
+      "iconPath": "icons/equipment/精准狙击镜.png",
+      "tier": 3,
+      "normal": {
+        "effectDescription": "攻击距离自身3格及以上的目标时，伤害提高30%"
+      },
+      "elite": {
+        "effectDescription": "攻击距离自身3格及以上的目标时，伤害提高50%"
+      }
+    },
+    {
+      "name": "炎国短刀",
+      "iconPath": "icons/equipment/炎国短刀.png",
+      "tier": 3,
+      "normal": {
+        "effectDescription": "每开启一次技能，获得5%的攻击力加成（最多叠加10次）"
+      },
+      "elite": {
+        "effectDescription": "每开启一次技能，获得8%的攻击力加成（最多叠加10次）"
+      }
+    },
+    {
+      "name": "迅捷作战粮",
+      "iconPath": "icons/equipment/迅捷作战粮.png",
+      "tier": 3,
+      "normal": {
+        "effectDescription": "部署时，获得3点技力；每有一个同盟约的其他干员，额外获得3点技力"
+      },
+      "elite": {
+        "effectDescription": "部署时，获得6点技力；每有一个同盟约的其他干员，额外获得6点技力"
+      }
+    },
+    {
+      "name": "歌利亚头盔",
+      "iconPath": "icons/equipment/歌利亚头盔.png",
+      "tier": 3,
+      "normal": {
+        "effectDescription": "生命上限+25%；部署时若身前一格没有其他干员，生命上限额外+15%"
+      },
+      "elite": {
+        "effectDescription": "生命上限+45%；部署时若身前一格没有其他干员，生命上限额外+25%"
+      }
+    },
+    {
+      "name": "阿戈尔重刃",
+      "iconPath": "icons/equipment/阿戈尔重刃.png",
+      "tier": 3,
+      "normal": {
+        "effectDescription": "攻击力+40%，攻击速度-10"
+      },
+      "elite": {
+        "effectDescription": "攻击力+60%，攻击速度-10"
+      }
+    },
+    {
+      "name": "奥术法阵",
+      "iconPath": "icons/equipment/奥术法阵.png",
+      "tier": 3,
+      "normal": {
+        "effectDescription": "法术抗性+20，攻击使目标失去特殊能力5秒"
+      },
+      "elite": {
+        "effectDescription": "法术抗性+30，攻击使目标失去特殊能力5秒"
+      }
+    },
+    {
+      "name": "坚固维式重锤",
+      "iconPath": "icons/equipment/坚固维式重锤.png",
+      "tier": 3,
+      "normal": {
+        "effectDescription": "攻击力+25%；首次受到致命伤害时生命值不低于1，持续8秒"
+      },
+      "elite": {
+        "effectDescription": "攻击力+45%；首次受到致命伤害时生命值不低于1，持续8秒"
+      }
+    },
+    {
+      "name": "加速维式重锤",
+      "iconPath": "icons/equipment/加速维式重锤.png",
+      "tier": 3,
+      "normal": {
+        "effectDescription": "攻击力+25%；攻击速度+30"
+      },
+      "elite": {
+        "effectDescription": "攻击力+45%；攻击速度+30"
+      }
+    },
+    {
+      "name": "突袭手雷",
+      "iconPath": "icons/equipment/突袭手雷.png",
+      "tier": 3,
+      "normal": {
+        "effectDescription": "每次部署后的10秒内，攻击时使目标晕眩2秒"
+      },
+      "elite": {
+        "effectDescription": "每次部署后的15秒内，攻击时使目标晕眩2秒"
+      }
+    },
+    {
+      "name": "驮兽储蓄罐",
+      "iconPath": "icons/equipment/驮兽储蓄罐.png",
+      "tier": 3,
+      "normal": {
+        "effectDescription": "装备时销毁，并随机获得1~6资金"
+      },
+      "elite": {
+        "effectDescription": "装备时销毁，并随机获得2~12资金"
+      }
+    },
+    {
+      "name": "乌萨斯呼吸器",
+      "iconPath": "icons/equipment/乌萨斯呼吸器.png",
+      "tier": 3,
+      "normal": {
+        "effectDescription": "阻挡数+1，攻击力+20%，每次再部署时上述加成效果叠加（最多叠加2次）"
+      },
+      "elite": {
+        "effectDescription": "阻挡数+1，攻击力+30%，每次再部署时上述加成效果叠加（最多叠加3次）"
+      }
+    },
+    {
+      "name": "多功能补剂",
+      "iconPath": "icons/equipment/多功能补剂.png",
+      "tier": 3,
+      "normal": {
+        "effectDescription": "携带者每次造成伤害时，自身所属已激活盟约临时层数+1（每场战斗最多叠加12层）"
+      },
+      "elite": {
+        "effectDescription": "携带者每次造成伤害时，自身所属已激活盟约临时层数+2（每场战斗最多叠加24层）"
+      }
+    },
+    {
+      "name": "伊比利亚骨刺刀",
+      "iconPath": "icons/equipment/伊比利亚骨刺刀.png",
+      "tier": 3,
+      "normal": {
+        "effectDescription": "携带者每次造成伤害时，额外造成1次相当于自身攻击力25%的法术伤害"
+      },
+      "elite": {
+        "effectDescription": "携带者每次造成伤害时，额外造成2次相当于自身攻击力25%的法术伤害"
+      }
+    },
+    {
+      "name": "定期存折",
+      "iconPath": "icons/equipment/定期存折.png",
+      "tier": 3,
+      "normal": {
+        "effectDescription": "装备时销毁，获得{showtag_value_1}资金（持有时每回合+1）"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "不退者之盾",
+      "iconPath": "icons/equipment/不退者之盾.png",
+      "tier": 3,
+      "normal": {
+        "effectDescription": "免疫晕眩、冻结等特殊状态，若与“不退者力场”同时持有则组合为“不退者卫护系统”"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "寻呼模块",
+      "iconPath": "icons/equipment/寻呼模块.png",
+      "tier": 4,
+      "normal": {
+        "effectDescription": "装备时销毁，在调度中心出现至多3名拥有该干员第一盟约的干员，免费获取其中1名（不高于当前调度中心等级）"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "蜂鸣器",
+      "iconPath": "icons/equipment/蜂鸣器.png",
+      "tier": 4,
+      "normal": {
+        "effectDescription": "更容易受到攻击，生命上限+40%"
+      },
+      "elite": {
+        "effectDescription": "更容易受到攻击，生命上限+60%"
+      }
+    },
+    {
+      "name": "伪装服",
+      "iconPath": "icons/equipment/伪装服.png",
+      "tier": 4,
+      "normal": {
+        "effectDescription": "首次受到伤害后获得隐匿，持续15秒"
+      },
+      "elite": {
+        "effectDescription": "首次受到伤害后获得隐匿，持续25秒"
+      }
+    },
+    {
+      "name": "卡西米尔竞技旗",
+      "iconPath": "icons/equipment/卡西米尔竞技旗.png",
+      "tier": 4,
+      "normal": {
+        "effectDescription": "部署后15秒内造成的伤害提升至135%，随后逐渐衰减"
+      },
+      "elite": {
+        "effectDescription": "部署后15秒内造成的伤害提升至160%，随后逐渐衰减"
+      }
+    },
+    {
+      "name": "灼燃维式重锤",
+      "iconPath": "icons/equipment/灼燃维式重锤.png",
+      "tier": 4,
+      "normal": {
+        "effectDescription": "攻击力+30%；造成法术伤害时附带相当于10%伤害的灼燃损伤"
+      },
+      "elite": {
+        "effectDescription": "攻击力+50%；造成法术伤害时附带相当于10%伤害的灼燃损伤"
+      }
+    },
+    {
+      "name": "护盾无人机",
+      "iconPath": "icons/equipment/护盾无人机.png",
+      "tier": 4,
+      "normal": {
+        "effectDescription": "治疗时有10%概率使目标获得1层护盾（最多1层）"
+      },
+      "elite": {
+        "effectDescription": "治疗时有15%概率使目标获得1层护盾（最多1层）"
+      }
+    },
+    {
+      "name": "M3茧甲",
+      "iconPath": "icons/equipment/M3茧甲.png",
+      "tier": 4,
+      "normal": {
+        "effectDescription": "战斗阶段被击倒时立刻复活（一场战斗仅1次）"
+      },
+      "elite": {
+        "effectDescription": "战斗阶段被击倒时立刻复活（一场战斗仅2次）"
+      }
+    },
+    {
+      "name": "莱塔尼亚小鼓",
+      "iconPath": "icons/equipment/莱塔尼亚小鼓.png",
+      "tier": 4,
+      "normal": {
+        "effectDescription": "携带者攻击范围内每次有单位被击倒时回复2技力"
+      },
+      "elite": {
+        "effectDescription": "携带者攻击范围内每次有单位被击倒时回复4技力"
+      }
+    },
+    {
+      "name": "谢拉格不融冰",
+      "iconPath": "icons/equipment/谢拉格不融冰.png",
+      "tier": 4,
+      "normal": {
+        "effectDescription": "造成伤害时有12%概率对目标施加1.5秒的寒冷"
+      },
+      "elite": {
+        "effectDescription": "造成伤害时有20%概率对目标施加1.5秒的寒冷"
+      }
+    },
+    {
+      "name": "可靠怀表",
+      "iconPath": "icons/equipment/可靠怀表.png",
+      "tier": 4,
+      "normal": {
+        "effectDescription": "携带者技能开启所需技力-20%，但技能期间攻击速度-25%"
+      },
+      "elite": {
+        "effectDescription": "携带者技能开启所需技力-40%，但技能期间攻击速度-25%"
+      }
+    },
+    {
+      "name": "一次性促销券",
+      "iconPath": "icons/equipment/一次性促销券.png",
+      "tier": 4,
+      "normal": {
+        "effectDescription": "装备时销毁，在调度中心出现3件装备，免费获取其中1件（不高于当前调度中心等级）"
+      },
+      "elite": {
+        "effectDescription": "装备时销毁，在调度中心出现6件装备，免费获取其中2件（不高于当前调度中心等级）"
+      }
+    },
+    {
+      "name": "驱逐者警棍",
+      "iconPath": "icons/equipment/驱逐者警棍.png",
+      "tier": 4,
+      "normal": {
+        "effectDescription": "携带者对受到晕眩、冻结、恐惧等异常效果影响的敌人造成的伤害提升30%，若与“驱逐者瓦斯”同时持有则组合为“驱逐者防暴装备”"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "动能单手弩",
+      "iconPath": "icons/equipment/动能单手弩.png",
+      "tier": 4,
+      "normal": {
+        "effectDescription": "造成伤害时有30%概率使该次攻击力提升至130%；若与“动能加速器”同时持有则组合为“动能轰击弩”"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "汲取者之喙",
+      "iconPath": "icons/equipment/汲取者之喙.png",
+      "tier": 4,
+      "normal": {
+        "effectDescription": "每次造成伤害时回复相当于造成伤害5%的生命值；若与“汲取者之心”同时持有则组合为“汲取者之镰”"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "双模机械臂",
+      "iconPath": "icons/equipment/双模机械臂.png",
+      "tier": 5,
+      "normal": {
+        "effectDescription": "攻击力+30%，自身造成物理和法术伤害时，伤害类型转化为弱点伤害"
+      },
+      "elite": {
+        "effectDescription": "攻击力+50%，自身造成物理和法术伤害时，伤害类型转化为弱点伤害"
+      }
+    },
+    {
+      "name": "信标",
+      "iconPath": "icons/equipment/信标.png",
+      "tier": 5,
+      "normal": {
+        "effectDescription": "装备时目标干员和本装备销毁，在调度中心出现2名与目标干员同等阶的干员，免费获取其中1名\n若在同盟模拟中且存在其他队友，下个休整期向相应盟约人数最多的队友发送1个原干员\n相应盟约人数相同则随机发送\n无法装备给自编干员"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "拟态物质",
+      "iconPath": "icons/equipment/拟态物质.png",
+      "tier": 5,
+      "normal": {
+        "effectDescription": "装备时销毁，若已拥有至少2名该初始干员，则再获得1名该初始干员；否则随机获得1名同阶干员"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "博士投影",
+      "iconPath": "icons/equipment/博士投影.png",
+      "tier": 5,
+      "normal": {
+        "effectDescription": "装备后下个回合开始时销毁，并使该干员晋升为精锐干员"
+      },
+      "elite": {
+        "effectDescription": "装备时销毁，立即使该干员晋升为精锐干员"
+      }
+    },
+    {
+      "name": "天马之盔",
+      "iconPath": "icons/equipment/天马之盔.png",
+      "tier": 5,
+      "normal": {
+        "effectDescription": "生命上限+60%，若与“天马之枪”同时持有则组合为“天马之耀”"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "电流维式重锤",
+      "iconPath": "icons/equipment/电流维式重锤.png",
+      "tier": 5,
+      "normal": {
+        "effectDescription": "攻击力+30%；造成伤害时有5%概率使目标获得1层麻痹，且对麻痹的敌人造成伤害时无视其30%防御和法术抗性"
+      },
+      "elite": {
+        "effectDescription": "攻击力+50%；造成伤害时有5%概率使目标获得1层麻痹，且对麻痹的敌人造成伤害时无视其30%防御和法术抗性"
+      }
+    },
+    {
+      "name": "佣兵名牌",
+      "iconPath": "icons/equipment/佣兵名牌.png",
+      "tier": 5,
+      "normal": {
+        "effectDescription": "每有一种激活的盟约，使携带者攻击力+6%、生命上限+6%（最多叠加8次）"
+      },
+      "elite": {
+        "effectDescription": "每有一种激活的盟约，使携带者攻击力+12%、生命上限+12%（最多叠加8次）"
+      }
+    },
+    {
+      "name": "人事部记录",
+      "iconPath": "icons/equipment/人事部记录.png",
+      "tier": 5,
+      "normal": {
+        "effectDescription": "装备时销毁，立刻特殊刷新1次调度中心，优先出现拥有该干员第一盟约的干员（不高于当前调度中心等级）"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "瓶装烈性反应",
+      "iconPath": "icons/equipment/瓶装烈性反应.png",
+      "tier": 5,
+      "normal": {
+        "effectDescription": "携带者对处于元素爆发状态的敌人造成的伤害额外增加30%"
+      },
+      "elite": {
+        "effectDescription": "携带者对处于元素爆发状态的敌人造成的伤害额外增加50%"
+      }
+    },
+    {
+      "name": "不退者力场",
+      "iconPath": "icons/equipment/不退者力场.png",
+      "tier": 5,
+      "normal": {
+        "effectDescription": "阻挡数+2，每阻挡一个单位自身生命上限和防御力提升20%，若与“不退者之盾”同时持有则组合为“不退者卫护系统”"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "驱逐者瓦斯",
+      "iconPath": "icons/equipment/驱逐者瓦斯.png",
+      "tier": 5,
+      "normal": {
+        "effectDescription": "携带者攻击范围内的敌人受到的晕眩、冻结、恐惧等异常状态影响时间提高100%，若与“驱逐者警棍”同时持有则组合为“驱逐者防暴装备”"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "投机骰子",
+      "iconPath": "icons/equipment/投机骰子.png",
+      "tier": 5,
+      "normal": {
+        "effectDescription": "装备时销毁，从3个指令中选择1个替换当前指令"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "天马之枪",
+      "iconPath": "icons/equipment/天马之枪.png",
+      "tier": 6,
+      "normal": {
+        "effectDescription": "攻击力+50%，若与“天马之盔”同时持有则组合为“天马之耀”"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "人事部文档",
+      "iconPath": "icons/equipment/人事部文档.png",
+      "tier": 6,
+      "normal": {
+        "effectDescription": "装备时销毁，最大可部署人数变为9"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "变形同构体",
+      "iconPath": "icons/equipment/变形同构体.png",
+      "tier": 6,
+      "normal": {
+        "effectDescription": "携带者获得额外盟约（由另一件携带装备而定）\n具体对应关系可在模拟中查看本装备天赋栏"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "动能加速器",
+      "iconPath": "icons/equipment/动能加速器.png",
+      "tier": 6,
+      "normal": {
+        "effectDescription": "每次攻击或治疗时攻击速度+2（最高60层）；若与“动能单手弩”同时持有则组合为“动能轰击弩”"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "汲取者之心",
+      "iconPath": "icons/equipment/汲取者之心.png",
+      "tier": 6,
+      "normal": {
+        "effectDescription": "攻击力+30%，攻击速度+30，每秒流失1%最大生命值（不会降至0）；若与“汲取者之喙”同时持有则组合为“汲取者之镰”"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "终极维式重锤",
+      "iconPath": "icons/equipment/终极维式重锤.png",
+      "tier": 6,
+      "normal": {
+        "effectDescription": "携带者获得当前场上所有维式重锤特殊效果，且每有一种带有特殊效果的维式重锤自身攻击力额外+20%"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "不退者卫护系统",
+      "iconPath": "icons/equipment/不退者卫护系统.png",
+      "tier": 6,
+      "normal": {
+        "effectDescription": "免疫晕眩、冻结等特殊状态，阻挡数+2，每阻挡一个单位自身生命上限和防御力提升20%；携带者开启技能时对自身周围范围内敌人产生一次诱导，持续3秒"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "动能轰击弩",
+      "iconPath": "icons/equipment/动能轰击弩.png",
+      "tier": 6,
+      "normal": {
+        "effectDescription": "造成伤害时有30%概率使攻击力提升至130%；每次攻击后攻击速度+2（最高60层），攻击速度叠加达到上限后每次攻击时有30%概率对攻击范围内随机敌人造成自身攻击力100%的范围物理伤害"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "汲取者之镰",
+      "iconPath": "icons/equipment/汲取者之镰.png",
+      "tier": 6,
+      "normal": {
+        "effectDescription": "攻击力+30%，攻击速度+30，每秒流失1%最大生命值（不会降至0），每次造成伤害时回复相当于造成伤害5%的生命值；携带者处于技能期间时上述效果翻倍且自身无法被治疗"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "驱逐者防暴装备",
+      "iconPath": "icons/equipment/驱逐者防暴装备.png",
+      "tier": 6,
+      "normal": {
+        "effectDescription": "携带者攻击范围内的敌人受到的晕眩、冻结、恐惧等异常状态影响时间提高100%，且对受这类异常状态影响的敌人造成伤害提升30%；携带者处于技能期间时，每次施加这类异常状态时有50%概率将其传递给附近另一名敌人"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    },
+    {
+      "name": "天马之耀",
+      "iconPath": "icons/equipment/天马之耀.png",
+      "tier": 6,
+      "normal": {
+        "effectDescription": "生命上限+60%，每秒恢复8%最大生命值；攻击力+50%，造成伤害时额外造成攻击力30%真实伤害"
+      },
+      "elite": {
+        "effectDescription": ""
+      }
+    }
+  ]
+}

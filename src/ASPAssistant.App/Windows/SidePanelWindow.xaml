@@ -1,0 +1,206 @@
+<!-- Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md. -->
+<Window x:Class="ASPAssistant.App.Windows.SidePanelWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:ASPAssistant.App.Views"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="ASP Assistant"
+        Width="310" MinWidth="280" MaxWidth="400"
+        WindowStyle="None"
+        ResizeMode="CanResizeWithGrip"
+        ShowInTaskbar="True"
+        Topmost="True"
+        Cursor="Arrow"
+        Icon="{StaticResource AspaLogo}"
+        Background="{DynamicResource PanelBackgroundBrush}">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="5" GlassFrameThickness="0" />
+    </WindowChrome.WindowChrome>
+    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <DockPanel>
+            <!-- Custom title bar -->
+            <Border DockPanel.Dock="Top" Background="{DynamicResource TitleBackgroundBrush}" MouseLeftButtonDown="OnTitleBarDrag">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <Button x:Name="ThemeToggleButton" Click="OnThemeToggle"
+                                AutomationProperties.Name="切换黑白主题"
+                                Style="{StaticResource TitleBarButton}" />
+                        <Button Content="─" Click="OnMinimize"
+                                Style="{StaticResource TitleBarButton}" />
+                        <Button Content="✕" Click="OnClose"
+                                Style="{StaticResource CloseButton}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Image Source="{StaticResource AspaLogo}" Width="16" Height="16" Margin="10,0,0,0" />
+                        <TextBlock Text="ASP Assistant" Foreground="{DynamicResource TextPrimaryBrush}"
+                                   FontSize="12" VerticalAlignment="Center" Margin="8,0,0,0" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Update notification banner (hidden until a new version is found) -->
+            <Border x:Name="UpdateBanner" DockPanel.Dock="Top"
+                    Background="{DynamicResource SuccessTintBrush}"
+                    BorderBrush="{DynamicResource SuccessBorderBrush}" BorderThickness="0,0,0,1"
+                    Visibility="Collapsed" Padding="10,5,10,4">
+                <StackPanel>
+                    <!-- Top row: text + buttons -->
+                    <DockPanel>
+                        <!-- Action button: "查看更新" or "立即重启" -->
+                        <Button x:Name="UpdateActionButton" DockPanel.Dock="Right"
+                                Click="OnBannerAction"
+                                Padding="8,3" FontSize="11" Cursor="Hand"
+                                BorderThickness="0" Background="{DynamicResource SuccessBrush}" Foreground="White">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="bg" Background="{TemplateBinding Background}"
+                                            CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource SuccessHoverBrush}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="UpdateActionIcon" Text="↑ " FontWeight="Bold" />
+                                <TextBlock x:Name="UpdateActionText" Text="查看更新" />
+                            </StackPanel>
+                        </Button>
+                        <!-- Skip this version button -->
+                        <Button x:Name="SkipVersionButton" DockPanel.Dock="Right"
+                                Click="OnSkipVersion"
+                                Padding="6,3" FontSize="11" Cursor="Hand" Margin="0,0,6,0"
+                                BorderThickness="0" Background="Transparent" Foreground="{DynamicResource SuccessTextBrush}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="bg" Background="{TemplateBinding Background}"
+                                            CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource NeutralHoverBrush}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <TextBlock Text="跳过该版本" />
+                        </Button>
+                        <TextBlock x:Name="UpdateBannerText"
+                                   Foreground="{DynamicResource SuccessTextBrush}" FontSize="11"
+                                   VerticalAlignment="Center" />
+                    </DockPanel>
+                    <!-- Download progress bar (visible during background download) -->
+                    <ProgressBar x:Name="UpdateBannerProgress"
+                                 Height="2" Margin="0,4,0,0"
+                                 Minimum="0" Maximum="100" Value="0"
+                                 Visibility="Collapsed"
+                                 Background="{DynamicResource NeutralStrongBrush}" Foreground="{DynamicResource SuccessBrush}"
+                                 BorderThickness="0" />
+                </StackPanel>
+            </Border>
+
+            <!-- Fullscreen warning banner -->
+            <Border x:Name="FullscreenBanner" DockPanel.Dock="Top"
+                    Background="{DynamicResource WarningTintBrush}"
+                    BorderBrush="{DynamicResource WarningBrush}" BorderThickness="0,0,0,1"
+                    Visibility="Collapsed" Padding="10,6">
+                <DockPanel>
+                    <Button x:Name="FullscreenBannerClose" DockPanel.Dock="Right"
+                            Click="OnDismissFullscreenBanner"
+                            Width="20" Cursor="Hand"
+                            BorderThickness="0" Background="Transparent" Foreground="{DynamicResource WarningBrush}"
+                            FontSize="12" FontWeight="Bold" Content="✕"
+                            VerticalAlignment="Top" Margin="4,0,0,0"
+                            ToolTip="关闭提示" />
+                    <StackPanel>
+                        <TextBlock Text="推荐在窗口模式下运行"
+                                   Foreground="{DynamicResource WarningTextBrush}" FontSize="11" FontWeight="SemiBold" />
+                        <TextBlock Text="（全屏下如有遮挡可拖动右下角调节窗口）"
+                                   Foreground="{DynamicResource WarningMutedBrush}" FontSize="10"
+                                   TextWrapping="Wrap" Margin="0,2,0,0" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Tab content + visible resize grip overlay -->
+            <Grid>
+                <TabControl Style="{StaticResource DarkTabControl}">
+                    <TabItem Header="干员" HorizontalContentAlignment="Stretch">
+                        <views:OperatorBrowseView x:Name="OperatorView" />
+                    </TabItem>
+                    <TabItem Header="装备">
+                        <views:EquipmentBrowseView x:Name="EquipmentView" />
+                    </TabItem>
+                    <TabItem Header="追踪">
+                        <views:TrackingView x:Name="TrackingView" />
+                    </TabItem>
+                    <TabItem Header="阵容">
+                        <views:LineupListView x:Name="LineupView" />
+                    </TabItem>
+                    <TabItem Header="敌人">
+                        <views:EnemyView x:Name="EnemyView" />
+                    </TabItem>
+                </TabControl>
+
+                <!-- Transient toast: shown via SidePanelWindow.ShowToast(). Click-through unless visible. -->
+                <Border x:Name="ToastBorder"
+                        HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                        Margin="0,0,0,30"
+                        MaxWidth="280"
+                        Background="{DynamicResource ToastBackgroundBrush}"
+                        BorderBrush="{DynamicResource AccentStrongBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="12,8"
+                        Visibility="Collapsed"
+                        IsHitTestVisible="False"
+                        Opacity="0">
+                    <TextBlock x:Name="ToastText"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               FontSize="12"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap" />
+                </Border>
+
+                <!-- Custom resize grip: three accent-coloured diagonal lines -->
+                <Border HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                        Width="20" Height="20" Cursor="SizeNWSE"
+                        Background="Transparent" ToolTip="拖动调整窗口大小">
+                    <Canvas Width="20" Height="20">
+                        <Line X1="6"  Y1="18" X2="18" Y2="6"
+                              Stroke="#993D6EF5" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                        <Line X1="11" Y1="18" X2="18" Y2="11"
+                              Stroke="#BB3D6EF5" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                        <Line X1="16" Y1="18" X2="18" Y2="16"
+                              Stroke="#FF6B9FFF" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    </Canvas>
+                </Border>
+
+                <Grid x:Name="BanProcessingMask"
+                      Visibility="Collapsed"
+                      Background="#CC000000"
+                      IsHitTestVisible="True">
+                    <Border HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Background="{DynamicResource MaskCardBackgroundBrush}"
+                            BorderBrush="#4D6B9FFF"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="16,12">
+                        <TextBlock x:Name="BanProcessingMaskText"
+                                   Text="ban位识别中，请勿操作鼠标"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Center"/>
+                    </Border>
+                </Grid>
+            </Grid>
+        </DockPanel>
+    </Border>
+</Window>

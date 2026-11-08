@@ -1,0 +1,70 @@
+# Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Run tests
+        run: dotnet test src/ASPAssistant.Tests/ASPAssistant.Tests.csproj -c Release
+      - name: Extract version
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          "VERSION=$version" >> $env:GITHUB_ENV
+      - name: Publish Windows x64
+        shell: pwsh
+        run: |
+          dotnet publish src/ASPAssistant.App/ASPAssistant.App.csproj `
+            -c Release -r win-x64 --self-contained true `
+            -p:Version=${{ env.VERSION }} `
+            -o publish/win-x64
+      - name: Trim symbols and unused runtimes
+        shell: pwsh
+        run: |
+          $out = (Resolve-Path "publish/win-x64").Path
+          Get-ChildItem -LiteralPath $out -Filter *.pdb -File | Remove-Item
+          $runtimeRoot = Join-Path $out "runtimes"
+          Get-ChildItem -LiteralPath $runtimeRoot -Directory |
+            Where-Object { $_.Name -ne "win-x64" } |
+            ForEach-Object {
+              $target = (Resolve-Path -LiteralPath $_.FullName).Path
+              if (-not $target.StartsWith($runtimeRoot + [IO.Path]::DirectorySeparatorChar)) {
+                throw "Runtime path is outside the publish directory"
+              }
+              Remove-Item -LiteralPath $target -Recurse -Force
+            }
+      - name: Bundle VC++ runtime
+        shell: pwsh
+        run: |
+          foreach ($dll in @("vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll")) {
+            Copy-Item -LiteralPath (Join-Path "C:\Windows\System32" $dll) -Destination "publish/win-x64"
+          }
+      - name: Zip release assets
+        shell: pwsh
+        run: |
+          foreach ($file in @("LICENSE", "NOTICE", "MODIFICATIONS.md")) {
+            if (-not (Test-Path -LiteralPath (Join-Path "publish/win-x64" $file))) {
+              throw "Missing distribution notice: $file"
+            }
+          }
+          Compress-Archive -Path publish/win-x64/* `
+            -DestinationPath "publish/ASPAssistant-${{ github.ref_name }}-win-x64.zip"
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: publish/ASPAssistant-${{ github.ref_name }}-win-x64.zip
+          generate_release_notes: true

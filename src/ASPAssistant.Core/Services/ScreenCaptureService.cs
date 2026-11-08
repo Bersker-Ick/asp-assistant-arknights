@@ -1,0 +1,100 @@
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using ASPAssistant.Core.Interop;
+
+namespace ASPAssistant.Core.Services;
+
+public class ScreenCaptureService
+{
+    /// <summary>
+    /// Maximum capture width in pixels. Screenshots wider than this are scaled down
+    /// proportionally before PNG encoding, reducing both encode time and all
+    /// downstream MAA decode/processing costs. Has no effect on windows narrower than this.
+    /// </summary>
+    public int MaxCaptureWidth { get; init; } = 1920;
+
+    /// <summary>
+    /// Captures the Arknights game window by reading pixels directly from the screen
+    /// via BitBlt (Graphics.CopyFromScreen). This works with hardware-accelerated
+    /// renderers (DirectX/Vulkan) that do not honour PrintWindow/GDI capture.
+    /// Requires the window to be visible and not fully occluded.
+    /// Returns PNG bytes, or null if the window is not found.
+    /// </summary>
+    public byte[]? CaptureScreen()
+    {
+        var hwnd = User32.FindArknightsWindow();
+        if (hwnd == IntPtr.Zero)
+        {
+            AppLogger.Warn("ScreenCapture", "Arknights window not found");
+            return null;
+        }
+
+        // Skip minimized windows: ClientToScreen returns (-32000,-32000) for them,
+        // which causes CopyFromScreen to throw Win32Exception(6) ERROR_INVALID_HANDLE.
+        if (User32.IsIconic(hwnd))
+        {
+            AppLogger.Warn("ScreenCapture", "Arknights window is minimized — skipping capture");
+            return null;
+        }
+
+        var screenRect = User32.GetClientRectScreen(hwnd);
+        if (screenRect == null)
+        {
+            AppLogger.Warn("ScreenCapture", "GetClientRectScreen returned null");
+            return null;
+        }
+
+        var rect = screenRect.Value;
+        int captureWidth  = rect.Width;
+        int captureHeight = rect.Height;
+        if (captureWidth <= 0 || captureHeight <= 0)
+        {
+            AppLogger.Warn("ScreenCapture", $"Invalid client rect size: {captureWidth}x{captureHeight}");
+            return null;
+        }
+
+        try
+        {
+            // Capture at native resolution.
+            using var raw = new Bitmap(captureWidth, captureHeight, PixelFormat.Format32bppArgb);
+            using (var g = Graphics.FromImage(raw))
+                g.CopyFromScreen(rect.Left, rect.Top, 0, 0,
+                    new System.Drawing.Size(captureWidth, captureHeight));
+
+            // Downscale if the window is wider than MaxCaptureWidth. This reduces PNG
+            // encode cost here and all MAA decode/processing costs in callers.
+            Bitmap output = raw;
+            bool scaled = captureWidth > MaxCaptureWidth;
+            if (scaled)
+            {
+                float scale = (float)MaxCaptureWidth / captureWidth;
+                int scaledW = MaxCaptureWidth;
+                int scaledH = (int)(captureHeight * scale);
+                var resized = new Bitmap(scaledW, scaledH, PixelFormat.Format32bppArgb);
+                using var gr = Graphics.FromImage(resized);
+                gr.InterpolationMode = InterpolationMode.Bilinear;
+                gr.DrawImage(raw, 0, 0, scaledW, scaledH);
+                output = resized;
+            }
+
+            try
+            {
+                using var ms = new MemoryStream();
+                output.Save(ms, ImageFormat.Png);
+                return ms.ToArray();
+            }
+            finally
+            {
+                if (scaled) output.Dispose();
+            }
+        }
+        catch (System.ComponentModel.Win32Exception ex)
+        {
+            // Window state changed between the geometry query and the capture
+            // (e.g. minimized mid-capture). Treat as no screenshot available.
+            AppLogger.Warn("ScreenCapture", $"Win32Exception during capture (code={ex.NativeErrorCode}): {ex.Message}");
+            return null;
+        }
+    }
+}

@@ -1,0 +1,98 @@
+<!-- Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md. -->
+<UserControl x:Class="ASPAssistant.App.Views.EquipmentBrowseView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:ASPAssistant.App.Controls"
+             xmlns:converters="clr-namespace:ASPAssistant.App.Converters"
+             Background="{DynamicResource PanelBackgroundBrush}"
+             DataContextChanged="OnViewDataContextChanged">
+    <UserControl.Resources>
+        <converters:NullToStringConverter x:Key="NullToAll" />
+    </UserControl.Resources>
+    <DockPanel>
+        <TextBox DockPanel.Dock="Top" Margin="8"
+                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                 Background="{DynamicResource InputBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
+                 BorderBrush="{DynamicResource BorderBrush}" Padding="6,4" />
+        <StackPanel DockPanel.Dock="Top" Margin="8,0,8,4">
+            <ToggleButton x:Name="FilterToggle"
+                          Foreground="{DynamicResource TextSecondaryBrush}"
+                          FontSize="12" Padding="0,4,12,4">
+                <ToggleButton.Style>
+                    <Style TargetType="ToggleButton" BasedOn="{StaticResource ClickableToggleButtonBase}">
+                        <Setter Property="Content" Value="▶ 筛选" />
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                        <Setter Property="VerticalContentAlignment" Value="Top" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <ContentPresenter HorizontalAlignment="Left"
+                                                      VerticalAlignment="Top"
+                                                      Margin="{TemplateBinding Padding}" />
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Content" Value="▼ 筛选" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ToggleButton.Style>
+            </ToggleButton>
+
+            <StackPanel Margin="0,6,0,2">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsChecked, ElementName=FilterToggle}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+
+                <TextBlock Text="等阶" Foreground="{DynamicResource TextSecondaryBrush}"
+                           FontSize="11" Margin="0,0,0,4" />
+                <ListBox x:Name="TierFilterList"
+                         Style="{StaticResource FilterChipListBox}"
+                         ItemsSource="{Binding AvailableTiers}"
+                         PreviewMouseLeftButtonDown="OnTierFilterPreviewMouseDown"
+                         SelectionChanged="OnTierFilterChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource NullToAll}, ConverterParameter=全部}"
+                                       FontSize="11" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <TextBlock Text="类型" Foreground="{DynamicResource TextSecondaryBrush}"
+                           FontSize="11" Margin="0,6,0,4" />
+                <ListBox x:Name="TypeFilterList"
+                         Style="{StaticResource FilterChipListBox}"
+                         ItemsSource="{Binding AvailableTypes}"
+                         SelectionChanged="OnTypeFilterChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource NullToAll}, ConverterParameter=全部}"
+                                       FontSize="11" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+        </StackPanel>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="EquipmentListControl" ItemsSource="{Binding FilteredEquipment}" Margin="8">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <controls:EquipmentCard TrackingToggled="OnEquipmentTrackingToggled" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>
