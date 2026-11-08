@@ -56,7 +56,7 @@ jobs:
       - name: Zip release assets
         shell: pwsh
         run: |
-          foreach ($file in @("LICENSE", "NOTICE", "MODIFICATIONS.md")) {
+          foreach ($file in @("LICENSE", "LICENSE.upstream", "NOTICE", "MODIFICATIONS.md")) {
             if (-not (Test-Path -LiteralPath (Join-Path "publish/win-x64" $file))) {
               throw "Missing distribution notice: $file"
             }

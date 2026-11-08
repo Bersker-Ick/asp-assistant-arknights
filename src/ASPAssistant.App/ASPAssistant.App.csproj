@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\..\LICENSE;..\..\NOTICE;..\..\MODIFICATIONS.md"
+    <Content Include="..\..\LICENSE;..\..\LICENSE.upstream;..\..\NOTICE;..\..\MODIFICATIONS.md"
              Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\data\**\*.json" Link="data\%(RecursiveDir)%(Filename)%(Extension)">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

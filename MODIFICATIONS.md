@@ -4,7 +4,7 @@
 
 - 上游基线：`93b2ba8514f6591a67e4cbf5a6169dee7d065bf6`。
 - 修改日期：2026-11-09。
-- 保留上游 Apache License 2.0 及原有版权、来源和第三方归属声明。
+- 保留上游许可原文于 `LICENSE.upstream`，保留原有版权、来源和第三方归属声明。修改部分使用 Apache 官方标准 2.0 正文。
 - 本次以清理后的源码快照建立新仓库；不包含本机 Git 历史、日志、个人配置或用户数据。
 
 ## 主要改动
@@ -23,6 +23,7 @@
 以下文件均相对上述上游基线作过修改。源码和构建文件还包含文件内变更声明，JSON 根对象包含 `_modificationNotice` 元数据。
 
 - `README.md` — 重写本衍生版本说明及上游署名。
+- `LICENSE` — 改用 Apache 官方标准 2.0 正文；上游许可原文逐字保存至 `LICENSE.upstream`，没有删除上游许可和版权声明。
 - `.github/workflows/release.yml`
 - `.gitignore`
 - `data/covenants.json`
@@ -67,6 +68,7 @@
 ## 新增文件
 
 - `NOTICE`、`MODIFICATIONS.md`：上游归属与修改说明。
+- `LICENSE.upstream`：与上游原 `LICENSE` 内容逐字相同的副本。
 - `.gitattributes`：固定文本换行，按二进制处理图标和 OCR 模型。
 - `docs/images/`：使用测试数据生成的界面截图，不包含实际游戏或个人桌面画面。
 - `data/icons/equipment/一次性促销券.png`

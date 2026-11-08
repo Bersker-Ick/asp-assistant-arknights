@@ -153,7 +153,8 @@ python fetch_spdatabase.py --skip-bosses --skip-enemies
 │   ├── ASPAssistant.Core/       # 业务逻辑与数据层
 │   └── ASPAssistant.Tests/      # 数据、视图模型和 WPF 回归测试
 ├── docs/images/                # 无个人信息的界面截图
-├── LICENSE                     # 原始 Apache License 2.0
+├── LICENSE                     # Apache 官方标准 License 2.0 正文
+├── LICENSE.upstream            # 保留上游许可原文及版权声明
 ├── NOTICE                      # 上游与第三方归属
 └── MODIFICATIONS.md            # 本衍生版本的变更说明
 ```
@@ -170,6 +171,8 @@ python fetch_spdatabase.py --skip-bosses --skip-enemies
 
 ## 许可证
 
-本项目基于 **[Apache License 2.0](LICENSE)** 开源，保留原项目的许可证及来源归属。分发源码或构建产物时，请一并保留 `LICENSE`、`NOTICE`、`MODIFICATIONS.md` 以及相关文件中的版权和变更声明。
+本项目的修改部分以 **[Apache License 2.0](LICENSE)** 开源。`LICENSE` 采用 [Apache 官方标准正文](https://www.apache.org/licenses/LICENSE-2.0.txt)；上游仓库原许可文本的部分措辞与标准正文不同，已逐字保留于 [LICENSE.upstream](LICENSE.upstream)，其中的原始版权声明及上游许可条件继续保留。
+
+分发源码或构建产物时，请一并保留 `LICENSE`、`LICENSE.upstream`、`NOTICE`、`MODIFICATIONS.md` 以及相关文件中的版权和变更声明。
 
 软件许可证不改变《明日方舟》游戏数据、名称、图像和其他第三方资源的权利归属；各依赖遵循其各自的许可证。本项目仅供学习和个人使用，与 Hypergryph / 鹰角网络无关。

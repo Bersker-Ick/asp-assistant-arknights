@@ -6,7 +6,11 @@ Upstream author: Moonfair and upstream contributors.
 Upstream revision: 93b2ba8514f6591a67e4cbf5a6169dee7d065bf6
 
 The upstream project is distributed under the Apache License, Version 2.0.
-The original LICENSE and source attribution notices are retained.
+The original upstream license text is retained verbatim in LICENSE.upstream.
+The upstream copyright notice is: Copyright 2026 caihaojun.
+LICENSE contains the standard Apache License, Version 2.0 from apache.org.
+The modifications are licensed under that standard license. This does not
+remove or override the retained upstream license or its attribution notices.
 
 Modifications copyright (c) 2026 ASP Assistant Regulation contributors.
 This distribution contains modifications for the Regulation season, interface,
