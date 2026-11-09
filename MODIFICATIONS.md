@@ -1,14 +1,16 @@
-# Modifications / 修改说明
+﻿# Modifications / 修改说明
 
 本项目是基于 [Moonfair/ASP_Assistant](https://github.com/Moonfair/ASP_Assistant) 修改的独立衍生版本，不是原作者发布的版本。
 
 - 上游基线：`93b2ba8514f6591a67e4cbf5a6169dee7d065bf6`。
 - 修改日期：2026-11-09。
-- 当前发行版本：`v1.1.0`；仓库名称改为 `bingyunhe/asp-assistant-arknights`，同步更新程序版本、自动更新地址、文档链接与发行说明，保留既有仓库历史及许可证。
+- 当前发行版本：`v1.1.1`；仓库名称改为 `bingyunhe/asp-assistant-arknights`，同步更新程序版本、自动更新地址、文档链接与发行说明，保留既有仓库历史及许可证。
 - 保留上游许可原文于 `LICENSE.upstream`，保留原有版权、来源和第三方归属声明。修改部分使用 Apache 官方标准 2.0 正文。
 - 本次以清理后的源码快照建立新仓库；不包含本机 Git 历史、日志、个人配置或用户数据。
 
 ## 主要改动
+
+- v1.1.1：统一项目展示名为 `ASP Assistant · Arknights`，更新 README、窗口/标题栏、文件属性、NOTICE 页首和发行标题；保留原项目名称、历史修改归属与版权声明，程序逻辑与 v1.1.0 相同。
 
 - 更新卫戍协议·规程·序列 I 的干员、装备、盟约数据与缺失图标。
 - 干员列表压缩显示头像和盟约，悬停展示普通/精锐详情。
@@ -30,6 +32,8 @@
 - 商店星号刷新忽略小于 6 个界面像素的位移，减少 OCR 边界微动。新增局内信息页和脱敏对局标记实拍回归，原生 OCR 测试串行，避免第三方原生库首次加载的进程级字典竞争。
 
 ## 修改的上游文件
+
+v1.1.1 展示名称调整：`README.md`、`RELEASE_NOTES.md`、`MODIFICATIONS.md`、`NOTICE`、`.github/workflows/release.yml`、`src/ASPAssistant.App/ASPAssistant.App.csproj` 和 `src/ASPAssistant.App/Windows/SidePanelWindow.xaml`。
 
 v1.1.0 发布调整：`src/ASPAssistant.App/ASPAssistant.App.csproj`、`src/ASPAssistant.Core/Services/UpdateService.cs`、`README.md`、`RELEASE_NOTES.md` 和 `MODIFICATIONS.md`。
 

@@ -1,6 +1,6 @@
 ﻿<div align="center">
   <img src="data/icons/aspa_logo.svg" width="96" height="96" alt="ASPA Logo"/>
-  <h1>ASP Assistant · 规程适配版</h1>
+  <h1>ASP Assistant · Arknights</h1>
   <p>明日方舟·卫戍协议 辅助工具<br/>基于 Moonfair/ASP_Assistant 修改，由 MaaFramework 提供图像识别能力。</p>
   <p>
     <img src="https://img.shields.io/badge/platform-Windows-blue?style=flat-square" alt="Windows"/>
@@ -32,9 +32,9 @@
 
 ## 功能简介
 
-ASP Assistant 是运行于《明日方舟》游戏窗口旁的侧边辅助工具，提供干员、装备查询，追踪列表、阵容管理与 Ban 位录入。
+ASP Assistant · Arknights 是运行于《明日方舟》游戏窗口旁的侧边辅助工具，提供干员、装备查询，追踪列表、阵容管理与 Ban 位录入。
 
-当前版本为 **v1.1.0**，包含商店追踪、敌人识别与录入稳定性修复。旧版 v1.0.0 用户可从本仓库 Releases 更新。
+当前版本为 **v1.1.1**，包含商店追踪、敌人识别与录入稳定性修复。旧版 v1.0.0 用户可从本仓库 Releases 更新。
 
 ### 干员浏览与筛选
 
@@ -81,7 +81,7 @@ ASP Assistant 是运行于《明日方舟》游戏窗口旁的侧边辅助工具
 - 支持窗口置顶、拖动和缩放；调整五个页面的内容宽度与筛选布局。
 - 游戏最小化时同步最小化辅助并隐藏标记；恢复游戏后恢复由游戏联动收起的辅助。提前手动最小化的辅助保持最小化。
 - 商店星号忽略小于 6 个界面像素的 OCR 位置变化，减少文字框抖动；明显移动继续跟随。
-- 版本号为 0.0.0 的开发构建跳过更新检查；v1.1.0 发行版仅检查本仓库 GitHub Releases。
+- 版本号为 0.0.0 的开发构建跳过更新检查；正式发行版仅检查本仓库 GitHub Releases。
 
 ## 当前数据与限制
 
@@ -110,12 +110,12 @@ ASP Assistant 是运行于《明日方舟》游戏窗口旁的侧边辅助工具
 
 无需编译的 Windows x64 独立运行包可在 [Releases](https://github.com/bingyunhe/asp-assistant-arknights/releases/latest) 获取。
 
-1. 下载 `ASPAssistant-v1.1.0-win-x64.zip`，不要选择 `Source code` 源码压缩包。
+1. 下载 `ASPAssistant-v1.1.1-win-x64.zip`，不要选择 `Source code` 源码压缩包。
 2. 右键“全部解压”到独立目录，保留全部文件和 `data`、`runtimes` 文件夹。
 3. 双击 `ASPAssistant.App.exe` 启动。无需另外安装 .NET；包内带有识别模型和所需运行库。
 4. 更新时先退出旧程序，再解压新版。个人追踪与阵容设置存放于本机用户数据目录。
 
-发布页同时提供 `SHA256SUMS.txt`，可用 `Get-FileHash .\ASPAssistant-v1.1.0-win-x64.zip -Algorithm SHA256` 核对下载完整性。详细说明见 [本版发行说明](RELEASE_NOTES.md)。
+发布页同时提供 `SHA256SUMS.txt`，可用 `Get-FileHash .\ASPAssistant-v1.1.1-win-x64.zip -Algorithm SHA256` 核对下载完整性。详细说明见 [本版发行说明](RELEASE_NOTES.md)。
 
 如果需要从源码构建：
 

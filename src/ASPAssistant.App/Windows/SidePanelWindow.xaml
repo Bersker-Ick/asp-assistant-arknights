@@ -4,7 +4,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:ASPAssistant.App.Views"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
-        Title="ASP Assistant"
+        Title="ASP Assistant · Arknights"
         Width="310" MinWidth="280" MaxWidth="400"
         WindowStyle="None"
         ResizeMode="CanResizeWithGrip"
@@ -32,7 +32,7 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Image Source="{StaticResource AspaLogo}" Width="16" Height="16" Margin="10,0,0,0" />
-                        <TextBlock Text="ASP Assistant" Foreground="{DynamicResource TextPrimaryBrush}"
+                        <TextBlock Text="ASP Assistant · Arknights" Foreground="{DynamicResource TextPrimaryBrush}"
                                    FontSize="12" VerticalAlignment="Center" Margin="8,0,0,0" />
                     </StackPanel>
                 </DockPanel>

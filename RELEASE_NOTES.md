@@ -1,14 +1,16 @@
-﻿# v1.1.0 · 商店追踪、敌人识别与录入稳定性更新
+﻿# ASP Assistant · Arknights v1.1.1
 
 本项目已更名为 **bingyunhe/asp-assistant-arknights**。这是基于 [Moonfair/ASP_Assistant](https://github.com/Moonfair/ASP_Assistant) 修改的独立衍生版本，不是原作者发布的版本；保留上游来源与 Apache License 2.0 归属声明。
 
+v1.1.1 将当前项目、程序和发行页展示名称统一为 **ASP Assistant · Arknights**，识别及界面功能沿用 v1.1.0。
+
 ## 下载与更新
 
-- 下载 **ASPAssistant-v1.1.0-win-x64.zip**，不要下载 `Source code` 作为运行包。
+- 下载 **ASPAssistant-v1.1.1-win-x64.zip**，不要下载 `Source code` 作为运行包。
 - 适用于 Windows 10 / 11 x64。完整解压后运行 **ASPAssistant.App.exe**。
 - 包内包含 .NET 8、OCR 模型、游戏数据、图标及所需 VC++ 运行库，无需另外安装 .NET。
 - 更新前自行退出旧辅助；保留整个解压目录。个人配置和阵容仍保存在本机用户数据目录。
-- 发布页提供 `SHA256SUMS.txt`，可通过 `Get-FileHash .\ASPAssistant-v1.1.0-win-x64.zip -Algorithm SHA256` 核对下载完整性。
+- 发布页提供 `SHA256SUMS.txt`，可通过 `Get-FileHash .\ASPAssistant-v1.1.1-win-x64.zip -Algorithm SHA256` 核对下载完整性。
 
 ## 主要更新
 
@@ -19,7 +21,7 @@
 - 单张信息截图结合图标亮灰与名称绑定，处理相邻盟约名合并；补全“绝技”盟约，保留未命名图标诊断。取消自动滚动重试。
 - 游戏最小化时同步收起辅助与覆盖层；恢复时保留用户手动最小化意图。
 - 保留黑白主题、多队伍合并追踪、干员悬停详情及装备数值对比。增加单实例运行保护。
-- 程序版本更新至 1.1.0，自动更新指向新仓库。
+- 程序版本更新至 1.1.1，自动更新指向新仓库。
 
 ## 使用提示与验证范围
 
