@@ -18,6 +18,10 @@
     <SolidColorBrush x:Key="AccentBorderBrush" Color="#551565C0" />
     <SolidColorBrush x:Key="AccentStrongBorderBrush" Color="#661565C0" />
     <SolidColorBrush x:Key="AccentPressedBrush" Color="#881565C0" />
+    <!-- 浅色主题的筛选选中态使用橙色，与蓝色的 Accent 区分 -->
+    <SolidColorBrush x:Key="FilterSelectedBrush" Color="#FFB45309" />
+    <SolidColorBrush x:Key="FilterSelectedTintBrush" Color="#1FF59E0B" />
+    <SolidColorBrush x:Key="FilterSelectedSoftBrush" Color="#33F59E0B" />
     <SolidColorBrush x:Key="NeutralFaintBrush" Color="#08000000" />
     <SolidColorBrush x:Key="ScrollTrackBrush" Color="#0D000000" />
     <SolidColorBrush x:Key="SoftBorderBrush" Color="#11000000" />

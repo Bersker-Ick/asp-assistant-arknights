@@ -42,6 +42,14 @@ public class RegulationDataTests
         equipment.Where(e => e.Type == EquipmentType.JobChange).Should().HaveCount(24)
             .And.OnlyContain(e => e.JobChangeCovenant.Length > 0);
         equipment.Single(e => e.Name == "坚守盾牌").JobChangeCovenant.Should().Be("坚守");
+        EquipmentBrowseViewModel.AvailableTypes.Should().Equal("", "普通", "转职");
+        viewModel.SearchText = "";
+        viewModel.SelectedTypeFilter = "普通";
+        viewModel.FilteredEquipment.Should().HaveCount(46);
+        viewModel.SelectedTypeFilter = "转职";
+        viewModel.FilteredEquipment.Should().HaveCount(24);
+        viewModel.SelectedTypeFilter = "";
+        viewModel.FilteredEquipment.Should().HaveCount(70);
         equipment.Should().OnlyContain(e => !e.Normal.EffectDescription.Contains("<$")
             && !e.Normal.EffectDescription.Contains("\\n"));
     }

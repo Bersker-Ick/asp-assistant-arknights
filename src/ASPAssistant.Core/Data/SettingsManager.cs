@@ -1,5 +1,6 @@
 // Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md.
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using ASPAssistant.Core.Models;
 
 namespace ASPAssistant.Core.Data;
@@ -7,6 +8,10 @@ namespace ASPAssistant.Core.Data;
 public class SettingsManager
 {
     private readonly string _settingsDir;
+    private static readonly JsonSerializerOptions ThemeJsonOptions = new()
+    {
+        Converters = { new JsonStringEnumConverter<GameShopTheme>(allowIntegerValues: false) }
+    };
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -31,6 +36,34 @@ public class SettingsManager
         Directory.CreateDirectory(_settingsDir);
         await File.WriteAllTextAsync(Path.Combine(_settingsDir, "light-theme.json"),
             JsonSerializer.Serialize(isLight));
+    }
+
+    public async Task<GameShopTheme> LoadGameShopThemeAsync()
+    {
+        var path = Path.Combine(_settingsDir, "game-theme.json");
+        if (!File.Exists(path)) return GameShopTheme.Terminal;
+        return JsonSerializer.Deserialize<GameShopTheme>(await File.ReadAllTextAsync(path), ThemeJsonOptions);
+    }
+
+    public async Task SaveGameShopThemeAsync(GameShopTheme theme)
+    {
+        Directory.CreateDirectory(_settingsDir);
+        await File.WriteAllTextAsync(Path.Combine(_settingsDir, "game-theme.json"),
+            JsonSerializer.Serialize(theme, ThemeJsonOptions));
+    }
+
+    public async Task<bool> LoadTrackMultipleLineupsAsync()
+    {
+        var path = Path.Combine(_settingsDir, "multiple-lineups.json");
+        if (!File.Exists(path)) return false;
+        return JsonSerializer.Deserialize<bool>(await File.ReadAllTextAsync(path));
+    }
+
+    public async Task SaveTrackMultipleLineupsAsync(bool enabled)
+    {
+        Directory.CreateDirectory(_settingsDir);
+        await File.WriteAllTextAsync(Path.Combine(_settingsDir, "multiple-lineups.json"),
+            JsonSerializer.Serialize(enabled));
     }
 
     public async Task SaveTrackingEntriesAsync(List<TrackingEntry> entries)

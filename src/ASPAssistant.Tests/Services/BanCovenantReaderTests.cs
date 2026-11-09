@@ -272,5 +272,8 @@ public class BanCovenantReaderTests
         public Task<string?> FindCandidateInRegionAsync(
             byte[] pngBytes, int x, int y, int width, int height, IReadOnlyList<string> candidates) =>
             Task.FromResult<string?>(null);
+
+        public Task<IReadOnlyList<OcrTextResult>> RecognizeLineAsync(
+            byte[] pngBytes, int x, int y, int width, int height) => throw new NotSupportedException();
     }
 }

@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace ASPAssistant.Core.Models;
 
-public enum EquipmentType { Normal, JobChange, Exclusive }
+public enum EquipmentType { Normal, JobChange }
 
 public class EquipmentVariant
 {
@@ -33,4 +33,11 @@ public class Equipment
 
     [JsonIgnore]
     public string JobChangeCovenant { get; set; } = "";
+
+    /// <summary>
+    /// 功能分类（攻击/防御/生存/技力/经济/盟约/其他），来自 data/equipment_categories.json，
+    /// 由 <c>JsonDataStore.LoadEquipmentAsync</c> 加载时填充；一件装备可属多类。
+    /// </summary>
+    [JsonIgnore]
+    public List<string> Categories { get; set; } = [];
 }

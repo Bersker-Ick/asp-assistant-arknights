@@ -36,7 +36,34 @@ public class JsonDataStore
 
         var json = await File.ReadAllTextAsync(path);
         var wrapper = JsonSerializer.Deserialize<EquipmentDataFile>(json, JsonOptions);
-        return (wrapper?.Equipment ?? [], wrapper?.ManualJobChangeEquipments ?? []);
+        var equipment = wrapper?.Equipment ?? [];
+        await ApplyEquipmentCategoriesAsync(equipment);
+        return (equipment, wrapper?.ManualJobChangeEquipments ?? []);
+    }
+
+    /// <summary>
+    /// Applies the hand-maintained function categories from <c>data/equipment_categories.json</c>
+    /// (攻击/防御/生存/技力/经济/盟约/其他). The file is maintained by hand and is never written by
+    /// <c>fetch_spdatabase.py</c>, so regenerating the scraped data keeps the classification.
+    /// Equipment without an entry falls back to 「其他」.
+    /// </summary>
+    private async Task ApplyEquipmentCategoriesAsync(List<Equipment> equipment)
+    {
+        var path = Path.Combine(_dataDirectory, "equipment_categories.json");
+        if (!File.Exists(path))
+            return;
+
+        var json = await File.ReadAllTextAsync(path);
+        var wrapper = JsonSerializer.Deserialize<EquipmentCategoryDataFile>(json, JsonOptions);
+        if (wrapper?.Categories is not { Count: > 0 } categories)
+            return;
+
+        foreach (var item in equipment)
+        {
+            item.Categories = categories.TryGetValue(item.Name, out var list) && list.Count > 0
+                ? list
+                : ["其他"];
+        }
     }
 
     /// <summary>
@@ -122,5 +149,10 @@ public class JsonDataStore
     {
         public List<CovenantInfo> Covenants { get; set; } = [];
         public Dictionary<string, string>? JobChangeEquipmentToCovenant { get; set; }
+    }
+
+    private class EquipmentCategoryDataFile
+    {
+        public Dictionary<string, List<string>>? Categories { get; set; }
     }
 }

@@ -1,3 +1,4 @@
+// Modified for ASP Assistant Arknights on 2026-11-09; see MODIFICATIONS.md.
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -83,7 +84,13 @@ public sealed class MaaOcrEngine : IOcrEngine, IDisposable
     public async Task<IReadOnlyList<OcrTextResult>> RecognizeRegionAsync(
         byte[] pngBytes, int x, int y, int width, int height)
     {
-        return await Task.Run(() => RunOcr(pngBytes, x, y, width, height, textFilter: null));
+        return await Task.Run(() => RunOcr(pngBytes, x, y, width, height, textFilter: null, onlyRecognition: false));
+    }
+
+    public async Task<IReadOnlyList<OcrTextResult>> RecognizeLineAsync(
+        byte[] pngBytes, int x, int y, int width, int height)
+    {
+        return await Task.Run(() => RunOcr(pngBytes, x, y, width, height, textFilter: null, onlyRecognition: true));
     }
 
     /// <inheritdoc/>
@@ -111,7 +118,7 @@ public sealed class MaaOcrEngine : IOcrEngine, IDisposable
                 ocrX = 0; ocrY = 0; ocrW = scaledW; ocrH = scaledH;
             }
 
-            var results = RunOcr(ocrInput, ocrX, ocrY, ocrW, ocrH, textFilter: candidates);
+            var results = RunOcr(ocrInput, ocrX, ocrY, ocrW, ocrH, textFilter: candidates, onlyRecognition: false);
 
             foreach (var candidate in candidates)
                 if (results.Any(r => r.Text.Contains(candidate, StringComparison.Ordinal)))
@@ -161,7 +168,7 @@ public sealed class MaaOcrEngine : IOcrEngine, IDisposable
 
     private IReadOnlyList<OcrTextResult> RunOcr(
         byte[] pngBytes, int x, int y, int width, int height,
-        IReadOnlyList<string>? textFilter)
+        IReadOnlyList<string>? textFilter, bool onlyRecognition)
     {
         try
         {
@@ -169,7 +176,7 @@ public sealed class MaaOcrEngine : IOcrEngine, IDisposable
             if (!imgBuf.TrySetEncodedData(pngBytes))
                 return [];
 
-            var paramJson = BuildOcrParamJson(x, y, width, height, textFilter);
+            var paramJson = BuildOcrParamJson(x, y, width, height, textFilter, onlyRecognition);
 
             var job = _tasker.AppendRecognition("OCR", paramJson, imgBuf);
             var status = job.Wait();
@@ -199,10 +206,11 @@ public sealed class MaaOcrEngine : IOcrEngine, IDisposable
     /// </summary>
     private string BuildOcrParamJson(
         int x, int y, int width, int height,
-        IReadOnlyList<string>? textFilter)
+        IReadOnlyList<string>? textFilter, bool onlyRecognition)
     {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"roi\":[{x},{y},{width},{height}]");
+        if (onlyRecognition) sb.Append(",\"only_rec\":true");
 
         if (textFilter is { Count: > 0 })
         {

@@ -22,8 +22,8 @@
             <Border DockPanel.Dock="Top" Background="{DynamicResource TitleBackgroundBrush}" MouseLeftButtonDown="OnTitleBarDrag">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                        <Button x:Name="ThemeToggleButton" Click="OnThemeToggle"
-                                AutomationProperties.Name="切换黑白主题"
+                        <Button x:Name="SettingsButton" Click="OnToggleSettings" Content="⚙"
+                                AutomationProperties.Name="设置" ToolTip="设置"
                                 Style="{StaticResource TitleBarButton}" />
                         <Button Content="─" Click="OnMinimize"
                                 Style="{StaticResource TitleBarButton}" />
@@ -36,6 +36,35 @@
                                    FontSize="12" VerticalAlignment="Center" Margin="8,0,0,0" />
                     </StackPanel>
                 </DockPanel>
+            </Border>
+
+            <Border x:Name="SettingsPanel" DockPanel.Dock="Top" Visibility="Collapsed"
+                    Background="{DynamicResource PanelBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="10,6,10,10">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,8">
+                        <Button DockPanel.Dock="Right" Content="✕" Click="OnToggleSettings"
+                                Style="{StaticResource TitleBarButton}" ToolTip="收起设置" />
+                        <TextBlock Text="设置" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                    </DockPanel>
+                    <TextBlock Text="辅助界面" FontSize="11" Margin="0,0,0,4" Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <ListBox x:Name="UiThemeSelector" Style="{StaticResource FilterChipListBox}">
+                        <ListBoxItem Content="深色" />
+                        <ListBoxItem Content="浅色" />
+                    </ListBox>
+                    <TextBlock Text="游戏主题" FontSize="11" Margin="0,8,0,4" Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <ListBox x:Name="GameThemeSelector" Style="{StaticResource FilterChipListBox}">
+                        <ListBoxItem Content="卫戍协议终端" />
+                        <ListBoxItem Content="乌萨斯齐心团" />
+                        <ListBoxItem Content="“全能的”可露希尔" />
+                    </ListBox>
+                    <TextBlock Text="请选择游戏中正在使用的主题，以提高商店识别准确率。" FontSize="11"
+                               TextWrapping="Wrap" Margin="0,4,0,10" Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <CheckBox x:Name="MultiLineupTrackingToggle" Content="同时追踪多个队伍"
+                              Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12"
+                              ToolTip="开启后追踪新阵容会追加目标；关闭后下次追踪会替换当前列表" />
+                </StackPanel>
             </Border>
 
             <!-- Update notification banner (hidden until a new version is found) -->

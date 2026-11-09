@@ -1,14 +1,22 @@
-﻿# Modifications / 修改说明
+# Modifications / 修改说明
 
 本项目是基于 [Moonfair/ASP_Assistant](https://github.com/Moonfair/ASP_Assistant) 修改的独立衍生版本，不是原作者发布的版本。
 
 - 上游基线：`93b2ba8514f6591a67e4cbf5a6169dee7d065bf6`。
 - 修改日期：2026-11-09。
-- 当前发行版本：`v1.1.1`；仓库名称改为 `bingyunhe/asp-assistant-arknights`，同步更新程序版本、自动更新地址、文档链接与发行说明，保留既有仓库历史及许可证。
+- 当前发行版本：`v1.2.0`；仓库 `bingyunhe/asp-assistant-arknights`，同步更新程序版本、图标、截图、文档与发行说明，保留既有仓库历史及许可证。
 - 保留上游许可原文于 `LICENSE.upstream`，保留原有版权、来源和第三方归属声明。修改部分使用 Apache 官方标准 2.0 正文。
 - 本次以清理后的源码快照建立新仓库；不包含本机 Git 历史、日志、个人配置或用户数据。
 
 ## 主要改动
+
+- 程序图标：按用户选定的鸿雪画框图片替换 EXE 图标与共享窗口/标题栏图标，保留原图白色背景与纵横比；ICO 包含 16～256 像素的九档尺寸，WPF 使用嵌入程序集的 PNG 资源。未更改业务功能或版本号。
+- v1.2.0（2026-11-09，设置与三主题）：标题栏原亮暗按钮改为齿轮设置面板，集中放置辅助深浅色、三款正式名称的游戏主题以及多队伍追踪；保留原 `light-theme.json`，新增 `game-theme.json` 和 `multiple-lineups.json` 保存选择，默认卫戍协议终端、单队追踪。启动加载偏好，切换游戏主题立即传给商店识别；个人配置排除提交。
+- 三主题识别：可露希尔保留原色识别，乌萨斯保留已验证的去蓝色增强，默认终端使用更低的名称区域。对终端真实漏读的卡牌补读精确名称行，长名字保留宽裁切、短名字可去掉右侧雪花纹理。使用现有 MaaFramework 的 [`only_rec`](https://github.com/MaaXYZ/MaaFramework/blob/main/docs/en_us/3.1-PipelineProtocol.md#ocr) 能力，没有新增依赖或模型；关闭商店后不补读。新增四张终端脱敏实拍与缩放、留边回归，并验证两张“地灵”各有独立 ID；完整名称纠正仅限实测的“斯卡菜→斯卡蒂”“复泰→复奏”。
+- 本轮涉及：`GameShopTheme.cs`、`SettingsManager.cs`、`IOcrEngine.cs`、`MaaOcrEngine.cs`、`ShopReader.cs`、`App.xaml.cs`、`SidePanelWindow.xaml/.cs`、`TrackingView.xaml`、设置/商店/WPF 测试、Ban 测试引擎接口补全、四张 `shop-terminal-*.png`、`.gitignore` 和说明文档。
+
+- 未发布的本地改动（2026-11-09）：移除装备“专属”筛选和分类，只保留全部、普通、转职，70 件装备数据不删减；适配用户提供的红褐色商店新皮肤。一次 OCR 输入保留原色名称栏，并加入交错排列的红通道增强名称区域，压低蓝色冻结干扰；小尺寸截图先放大，映射回原名称坐标、去重并保留同名多卡。局部纠正已复现的“卫成推荐信”“野繫／野紫”“云边”误读，独立读取“收起”并排除商店店主区域，避免菜单误高亮。
+- 本轮涉及：`Equipment.cs`、`EquipmentBrowseViewModel.cs`、`ShopReader.cs`、`ShopReaderTests.cs`、`RegulationDataTests.cs`、`ThemeAndHighlightTests.cs`、四张 `shop-frontier-*.png`、`SHOP_SAMPLES.md` 和 `README.md`。没有更换游戏数据、增加依赖、自动发布或重启游戏/辅助。
 
 - v1.1.1：统一项目展示名为 `ASP Assistant · Arknights`，更新 README、窗口/标题栏、文件属性、NOTICE 页首和发行标题；保留原项目名称、历史修改归属与版权声明，程序逻辑与 v1.1.0 相同。
 
@@ -21,6 +29,10 @@
 - 更新服务仅关联本仓库的 GitHub Releases；移除原作者 OSS 与 Pages 下载发布依赖。
 - 重写“确认本局信息”界面的 ban 位识别：改为单张未滚动截图读数，盟约禁用状态按图标亮绿/灰色判定，不再按“最右 N 个”猜测；OCR 把相邻盟约名合并成一行（如“伊比利亚维多利亚”）时按字符位置拆开；识别改为双向——先用像素找出图标网格与每个槽位的亮/灰状态，再把 OCR 名字吸附到最近的槽位（同名多行按纵向距离判定），没读到名字的图标作为“未命名图标”上报而不是静默丢弃；识别失败不再自动滚屏重试；单实例运行并限制同一界面只触发一次识别。
 - 补全盟约“绝技”（bondId `suntShip`，REGULAR，激活阈值 2）：它是无棋子归属的 noSelect 盟约，但会出现在 ban 位界面，因此 `covenants.json` 收录、`fetch_spdatabase.py` 的 `BOND_BAN` 不再排除它。
+- 装备卡片图标由 72 改为 56 像素；筛选区改版：胶囊式“筛选”开关带已选数量徽标、分组标题加细分隔线、芯片选中态改为浅底＋彩色描边（浅色主题用橙色 `FilterSelected*`，深色主题用蓝色），并修复深色主题下等阶“全部”芯片文字不显示的问题。
+- 自动更新加固：下载后校验 Release 里的 `SHA256SUMS.txt`（缺失或不匹配一律中止）；更新脚本改为“同盘 staging → 旧目录改名备份 → staging 改名就位 → 启动新版 → 清理备份”，任一步失败自动回滚并重启旧版；脚本改为 UTF-8 with BOM 写出（原实现用无 BOM UTF-8，Windows PowerShell 5.1 按 ANSI 解码会让中文路径/提示乱码并直接失败）；失败原因写入日志并显示在更新横幅上（原来被静默吞掉）。新增 `ASPA_UPDATE_FEED`（覆盖更新源）与 `ASPA_UPDATE_SILENT`（更新脚本不弹框）两个仅用于本地验证的环境变量。
+- 筛选增强：核心盟约／其他盟约／装备「类型」各加「同时选中」复选框（勾选后行内由 OR 改为 AND）；干员与装备的等阶改为默认多选；筛选结果为空时显示提示文案（AND 模式下为“没有同时满足所选条件的…”）；干员页「截屏录入」左侧新增「重置」按钮，一键恢复全部筛选状态。另修复词条／触发时机两行空芯片在深色主题下不显示文字的问题。
+- 装备页筛选新增「类型」（攻击/防御/生存/技力/经济/盟约/其他，数据来自手工维护的 `data/equipment_categories.json`，一件装备可属多类）；「类型」支持多选，选中多个时装备命中任一即显示；原「类型」栏（普通/转职）改名为「装备类别」。装备卡片在名称下方显示所属类别小标签。游戏数据源没有装备分类字段，分类由本项目自行判定，键缺失的装备归入「其他」。
 - 补充数据、视图模型、WPF 布局与主题回归验证；更新说明、排除规则及发布包中的许可证。
 - 2026-11-09 商店追踪：干员与装备统一进入识别，裁出名称栏放大后单次 OCR；处理合并名称、同名多卡与装备名称包含关系，按名称位置显示标记，修复漏检后残留与缩放后位置不更新。金光只作为视觉干扰，不推断角色三连或精锐。
 - 游戏最小化联动收起辅助和覆盖层，恢复时重新定位，并保留用户先前手动最小化的意图；窗口轮询避免并发重入。
@@ -32,6 +44,10 @@
 - 商店星号刷新忽略小于 6 个界面像素的位移，减少 OCR 边界微动。新增局内信息页和脱敏对局标记实拍回归，原生 OCR 测试串行，避免第三方原生库首次加载的进程级字典竞争。
 
 ## 修改的上游文件
+
+v1.2.0 发布同步更新版本配置、`README.md`、`RELEASE_NOTES.md`、`MODIFICATIONS.md` 及 `docs/images/` 的六张测试界面截图；README 使用与程序一致的鸿雪画框 PNG。
+
+程序图标本轮新增或修改：`data/icons/aspa_logo.ico`、`data/icons/aspa_logo.png`、`src/ASPAssistant.App/Resources/Logo.xaml` 和 `src/ASPAssistant.App/ASPAssistant.App.csproj`。
 
 v1.1.1 展示名称调整：`README.md`、`RELEASE_NOTES.md`、`MODIFICATIONS.md`、`NOTICE`、`.github/workflows/release.yml`、`src/ASPAssistant.App/ASPAssistant.App.csproj` 和 `src/ASPAssistant.App/Windows/SidePanelWindow.xaml`。
 
@@ -51,6 +67,7 @@ v1.1.0 发布调整：`src/ASPAssistant.App/ASPAssistant.App.csproj`、`src/ASPA
 - `.gitignore`
 - `data/covenants.json`
 - `data/equipment.json`
+- `data/equipment_categories.json`（新增：装备功能分类，手工维护，抓取脚本不覆盖）
 - `data/fetch_spdatabase.py`
 - `data/operators.json`
 - `src/ASPAssistant.App/ASPAssistant.App.csproj`
@@ -213,6 +230,8 @@ v1.1.0 发布调整：`src/ASPAssistant.App/ASPAssistant.App.csproj`、`src/ASPA
 - `src/ASPAssistant.Core/Services/BanIconGrid.cs`
 - `src/ASPAssistant.App/Program.cs`（启动入口、Windows 版本检查与单实例互斥）
 - `src/ASPAssistant.Tests/Data/RegulationDataTests.cs`
+- `src/ASPAssistant.Tests/Data/EquipmentCategoryTests.cs`
+- `src/ASPAssistant.Tests/Services/UpdateServiceTests.cs`
 - `src/ASPAssistant.Tests/Services/BanCovenantReaderTests.cs`
 - `src/ASPAssistant.Tests/TestData/ban-sample-1920x1080.png`
 - `src/ASPAssistant.Tests/Views/ThemeAndHighlightTests.cs`

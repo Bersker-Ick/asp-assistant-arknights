@@ -24,8 +24,26 @@ public partial class OperatorBrowseViewModel : ObservableObject
     [ObservableProperty]
     private string _searchText = "";
 
+    /// <summary>Selected tiers (multi-select; empty = 全部).</summary>
+    public List<int> SelectedTierFilters
+    {
+        get => _selectedTierFilters;
+        set
+        {
+            _selectedTierFilters = (value ?? []).Distinct().OrderBy(t => t).ToList();
+            ApplyFilters();
+        }
+    }
+
+    private List<int> _selectedTierFilters = [];
+
+    /// <summary>When true, selected core covenants must all be present (AND) instead of any (OR).</summary>
     [ObservableProperty]
-    private int? _selectedTierFilter;
+    private bool _coreCovenantMatchAll;
+
+    /// <summary>When true, selected additional covenants must all be present (AND).</summary>
+    [ObservableProperty]
+    private bool _otherCovenantMatchAll;
 
     [ObservableProperty]
     private AvailabilityFilter _selectedAvailabilityFilter = AvailabilityFilter.All;
@@ -49,6 +67,12 @@ public partial class OperatorBrowseViewModel : ObservableObject
     public List<string?> AvailableTriggerTimings { get; private set; } = [];
 
     /// <summary>
+    /// Number of individual filter values currently applied — shown in the filter pill badge.
+    /// "|" items are dimension separators produced for <see cref="ActiveFilterTags"/>.
+    /// </summary>
+    public int ActiveFilterCount => ActiveFilterTags.Count(t => t != "|");
+
+    /// <summary>
     /// Individual tag strings for the active-filter summary bar.
     /// Regular tags are the filter values; "|" items are dimension separators.
     /// </summary>
@@ -59,8 +83,8 @@ public partial class OperatorBrowseViewModel : ObservableObject
             var groups = new List<List<string>>();
             if (SelectedAvailabilityFilter != AvailabilityFilter.All)
                 groups.Add([SelectedAvailabilityFilter == AvailabilityFilter.Available ? "本局可用" : "本局不可用"]);
-            if (SelectedTierFilter.HasValue)
-                groups.Add([TierToRoman(SelectedTierFilter.Value)]);
+            if (SelectedTierFilters.Count > 0)
+                groups.Add([.. SelectedTierFilters.Select(TierToRoman)]);
             var allCovenants = _selectedCoreCovenantFilters.Concat(_selectedOtherCovenantFilters).Order().ToList();
             if (allCovenants.Count > 0)
                 groups.Add(allCovenants);
@@ -140,7 +164,8 @@ public partial class OperatorBrowseViewModel : ObservableObject
         => HighlightedCovenants = new HashSet<string>();
 
     partial void OnSearchTextChanged(string value) => ApplyFilters();
-    partial void OnSelectedTierFilterChanged(int? value) => ApplyFilters();
+    partial void OnCoreCovenantMatchAllChanged(bool value) => ApplyFilters();
+    partial void OnOtherCovenantMatchAllChanged(bool value) => ApplyFilters();
     partial void OnSelectedTraitTypeFilterChanged(string? value) => ApplyFilters();
     partial void OnSelectedTriggerTimingFilterChanged(string? value) => ApplyFilters();
     partial void OnSelectedAvailabilityFilterChanged(AvailabilityFilter value) => ApplyFilters();
@@ -172,17 +197,27 @@ public partial class OperatorBrowseViewModel : ObservableObject
                 : filtered.Where(o => !_isBannedCheck(o.Name));
         }
 
-        if (SelectedTierFilter.HasValue)
-            filtered = filtered.Where(o => o.Tier == SelectedTierFilter.Value);
+        if (SelectedTierFilters.Count > 0)
+        {
+            var tiers = SelectedTierFilters;
+            filtered = filtered.Where(o => tiers.Contains(o.Tier));
+        }
 
         // Core and other covenant dimensions are independent (AND between dimensions,
         // OR within each dimension).
         if (_selectedCoreCovenantFilters.Count > 0)
-            filtered = filtered.Where(o => o.CoreCovenants.Any(c => _selectedCoreCovenantFilters.Contains(c)));
+        {
+            filtered = CoreCovenantMatchAll
+                ? filtered.Where(o => _selectedCoreCovenantFilters.All(c => o.CoreCovenants.Contains(c)))
+                : filtered.Where(o => o.CoreCovenants.Any(c => _selectedCoreCovenantFilters.Contains(c)));
+        }
 
         if (_selectedOtherCovenantFilters.Count > 0)
-            filtered = filtered.Where(o =>
-                o.AdditionalCovenants.Any(c => _selectedOtherCovenantFilters.Contains(c)));
+        {
+            filtered = OtherCovenantMatchAll
+                ? filtered.Where(o => _selectedOtherCovenantFilters.All(c => o.AdditionalCovenants.Contains(c)))
+                : filtered.Where(o => o.AdditionalCovenants.Any(c => _selectedOtherCovenantFilters.Contains(c)));
+        }
 
         if (!string.IsNullOrEmpty(SelectedTraitTypeFilter))
             filtered = filtered.Where(o =>
@@ -203,5 +238,28 @@ public partial class OperatorBrowseViewModel : ObservableObject
 
         FilteredOperators = new ObservableCollection<Operator>(filtered);
         OnPropertyChanged(nameof(ActiveFilterTags));
+        OnPropertyChanged(nameof(ActiveFilterCount));
+        OnPropertyChanged(nameof(EmptyListMessage));
+    }
+
+    /// <summary>提示文案：勾选「同时选中」而结果为空时，说明是“同时满足”导致的。</summary>
+    public string EmptyListMessage =>
+        CoreCovenantMatchAll || OtherCovenantMatchAll
+            ? "没有同时满足所选条件的干员"
+            : "没有符合条件的干员";
+
+    /// <summary>把全部筛选恢复为默认（各行回到“全部”、搜索清空、同时选中取消）。可用盟约高亮不属于筛选，保持不动。</summary>
+    public void ResetFilters()
+    {
+        SearchText = "";
+        SelectedAvailabilityFilter = AvailabilityFilter.All;
+        _selectedTierFilters = [];
+        _selectedCoreCovenantFilters.Clear();
+        _selectedOtherCovenantFilters.Clear();
+        SelectedTraitTypeFilter = null;
+        SelectedTriggerTimingFilter = null;
+        CoreCovenantMatchAll = false;
+        OtherCovenantMatchAll = false;
+        ApplyFilters();
     }
 }

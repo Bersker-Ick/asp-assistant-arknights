@@ -16,32 +16,9 @@
                  BorderBrush="{DynamicResource BorderBrush}" Padding="6,4" />
         <StackPanel DockPanel.Dock="Top" Margin="8,0,8,4">
             <ToggleButton x:Name="FilterToggle"
-                          Foreground="{DynamicResource TextSecondaryBrush}"
-                          FontSize="12" Padding="0,4,12,4">
-                <ToggleButton.Style>
-                    <Style TargetType="ToggleButton" BasedOn="{StaticResource ClickableToggleButtonBase}">
-                        <Setter Property="Content" Value="▶ 筛选" />
-                        <Setter Property="Background" Value="Transparent" />
-                        <Setter Property="BorderThickness" Value="0" />
-                        <Setter Property="HorizontalContentAlignment" Value="Left" />
-                        <Setter Property="VerticalContentAlignment" Value="Top" />
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ToggleButton">
-                                    <ContentPresenter HorizontalAlignment="Left"
-                                                      VerticalAlignment="Top"
-                                                      Margin="{TemplateBinding Padding}" />
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                        <Style.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter Property="Content" Value="▼ 筛选" />
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </ToggleButton.Style>
-            </ToggleButton>
+                          HorizontalAlignment="Left"
+                          Style="{StaticResource FilterTogglePill}"
+                          Content="筛选" />
 
             <StackPanel Margin="0,6,0,2">
                 <StackPanel.Style>
@@ -55,13 +32,36 @@
                     </Style>
                 </StackPanel.Style>
 
-                <TextBlock Text="等阶" Foreground="{DynamicResource TextSecondaryBrush}"
-                           FontSize="11" Margin="0,0,0,4" />
+                <ContentControl Style="{StaticResource FilterGroupHeader}" Margin="0,0,0,6" Content="等阶" />
                 <ListBox x:Name="TierFilterList"
+                         SelectionMode="Multiple"
                          Style="{StaticResource FilterChipListBox}"
                          ItemsSource="{Binding AvailableTiers}"
                          PreviewMouseLeftButtonDown="OnTierFilterPreviewMouseDown"
                          SelectionChanged="OnTierFilterChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Content, RelativeSource={RelativeSource AncestorType=ListBoxItem}, Converter={StaticResource NullToAll}, ConverterParameter=全部}"
+                                       FontSize="11" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <DockPanel Margin="0,10,0,6">
+                    <CheckBox x:Name="CategoryMatchAllToggle" DockPanel.Dock="Right" Content="同时选中"
+                              FontSize="11" Margin="8,0,0,0"
+                              VerticalAlignment="Center"
+                              Foreground="{DynamicResource TextSecondaryBrush}"
+                              ToolTip="勾选后，装备必须同时属于所有选中类型"
+                              IsChecked="{Binding CategoryMatchAll, Mode=TwoWay}" />
+                    <ContentControl Style="{StaticResource FilterGroupHeader}" Margin="0" Content="类型" />
+                </DockPanel>
+                <ListBox x:Name="CategoryFilterList"
+                         SelectionMode="Multiple"
+                         Style="{StaticResource FilterChipListBox}"
+                         ItemsSource="{Binding AvailableCategories}"
+                         PreviewMouseLeftButtonDown="OnCategoryFilterPreviewMouseDown"
+                         SelectionChanged="OnCategoryFilterChanged">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Converter={StaticResource NullToAll}, ConverterParameter=全部}"
@@ -70,8 +70,7 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <TextBlock Text="类型" Foreground="{DynamicResource TextSecondaryBrush}"
-                           FontSize="11" Margin="0,6,0,4" />
+                <ContentControl Style="{StaticResource FilterGroupHeader}" Margin="0,10,0,6" Content="装备类别" />
                 <ListBox x:Name="TypeFilterList"
                          Style="{StaticResource FilterChipListBox}"
                          ItemsSource="{Binding AvailableTypes}"
@@ -85,14 +84,32 @@
                 </ListBox>
             </StackPanel>
         </StackPanel>
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <ItemsControl x:Name="EquipmentListControl" ItemsSource="{Binding FilteredEquipment}" Margin="8">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <controls:EquipmentCard TrackingToggled="OnEquipmentTrackingToggled" />
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+        <Grid>
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl x:Name="EquipmentListControl" ItemsSource="{Binding FilteredEquipment}" Margin="8">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <controls:EquipmentCard TrackingToggled="OnEquipmentTrackingToggled" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+            <TextBlock x:Name="EmptyFilterText"
+                       Text="{Binding EmptyListMessage}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                       TextAlignment="Center" TextWrapping="Wrap" Margin="24,0"
+                       FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding FilteredEquipment.Count}" Value="0">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </Grid>
     </DockPanel>
 </UserControl>

@@ -106,3 +106,5 @@ __pycache__/
 /tracking.json
 /window-settings.json
 /light-theme.json
+/game-theme.json
+/multiple-lineups.json

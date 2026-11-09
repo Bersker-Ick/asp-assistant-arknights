@@ -66,8 +66,14 @@ public class ThemeAndHighlightTests
                     item.Tag.Should().Be("available");
                     ((SolidColorBrush)chip.BorderBrush).Color.Should().Be(
                         ((SolidColorBrush)application.FindResource("AvailableBrush")).Color);
+                    // Selected chips use the theme's filter-selection palette: orange on the
+                    // light theme, accent blue on the dark theme.
+                    var selectedText = ((SolidColorBrush)application.FindResource("FilterSelectedBrush")).Color;
+                    selectedText.Should().Be(isLight
+                        ? Color.FromRgb(0xB4, 0x53, 0x09)
+                        : Color.FromRgb(0x4F, 0xC3, 0xF7));
                     ((SolidColorBrush)chip.Background).Color.Should().Be(
-                        ((SolidColorBrush)application.FindResource("AccentBrush")).Color);
+                        ((SolidColorBrush)application.FindResource("FilterSelectedTintBrush")).Color);
                     ((SolidColorBrush)view.Background).Color.Should().Be(isLight
                         ? Color.FromRgb(247, 249, 252) : Color.FromRgb(26, 26, 46));
 
@@ -102,7 +108,7 @@ public class ThemeAndHighlightTests
                     item.Tag.Should().Be("");
                     vm.ActiveFilterTags.Should().Contain("乌萨斯");
                     ((SolidColorBrush)chip.BorderBrush).Color.Should().Be(
-                        ((SolidColorBrush)application.FindResource("AccentBrush")).Color);
+                        ((SolidColorBrush)application.FindResource("FilterSelectedBrush")).Color);
                 }
                 ThemeManager.Apply(false);
                 ((SolidColorBrush)view.Background).Color.Should().Be(Color.FromRgb(26, 26, 46));
@@ -121,9 +127,10 @@ public class ThemeAndHighlightTests
                 var enemyVm = new EnemyViewModel();
                 var sidePanel = new SidePanelWindow(vm, equipmentVm, trackingVm,
                     new GameStateViewModel(), new BanViewModel(), enemyVm,
-                    lineupVm, new LineupShareService(), operators, equipment, new SettingsManager(output));
+                    lineupVm, new LineupShareService(), operators, equipment, new SettingsManager(output), GameShopTheme.Terminal);
                 try
                 {
+                    SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(Dispatcher.CurrentDispatcher));
                     sidePanel.SetGameMinimized(true);
                     sidePanel.WindowState.Should().Be(WindowState.Minimized);
                     sidePanel.SetGameMinimized(false);
@@ -136,10 +143,46 @@ public class ThemeAndHighlightTests
                     sidePanel.WindowState = WindowState.Normal;
                     var content = (Border)sidePanel.Content;
                     var tabs = Descendants<TabControl>(content).Single();
-                    ((Button)sidePanel.FindName("ThemeToggleButton")).Content.Should().Be("☀");
+                    var settingsButton = (Button)sidePanel.FindName("SettingsButton");
+                    settingsButton.Content.Should().Be("⚙");
+                    sidePanel.FindName("ThemeToggleButton").Should().BeNull();
+                    var settingsPanel = (Border)sidePanel.FindName("SettingsPanel");
+                    var uiThemes = (ListBox)sidePanel.FindName("UiThemeSelector");
+                    var gameThemes = (ListBox)sidePanel.FindName("GameThemeSelector");
+                    var multiToggle = (CheckBox)sidePanel.FindName("MultiLineupTrackingToggle");
+                    gameThemes.Items.Cast<ListBoxItem>().Select(i => i.Content).Should()
+                        .Equal("卫戍协议终端", "乌萨斯齐心团", "“全能的”可露希尔");
+                    gameThemes.SelectedIndex.Should().Be(0);
+                    GameShopTheme changedTheme = GameShopTheme.Terminal;
+                    sidePanel.GameThemeChanged += theme => changedTheme = theme;
                     foreach (var isLight in new[] { false, true })
                     {
                         ThemeManager.Apply(isLight);
+                        settingsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        settingsPanel.Visibility.Should().Be(Visibility.Visible);
+                        uiThemes.SelectedIndex = isLight ? 1 : 0;
+                        WaitForPreferenceSave(uiThemes);
+                        ThemeManager.IsLight.Should().Be(isLight);
+                        foreach (var theme in Enum.GetValues<GameShopTheme>())
+                        {
+                            gameThemes.SelectedIndex = (int)theme;
+                            WaitForPreferenceSave(gameThemes);
+                            sidePanel.GameTheme.Should().Be(theme);
+                            changedTheme.Should().Be(theme);
+                        }
+                        gameThemes.SelectedIndex = 0;
+                        WaitForPreferenceSave(gameThemes);
+                        multiToggle.IsChecked = true;
+                        WaitForPreferenceSave(multiToggle);
+                        trackingVm.TrackMultipleLineups.Should().BeTrue();
+                        File.ReadAllText(Path.Combine(output, "game-theme.json")).Should().Be("\"Terminal\"");
+                        File.ReadAllText(Path.Combine(output, "multiple-lineups.json")).Should().Be("true");
+                        content.Measure(new Size(310, 900));
+                        content.Arrange(new Rect(0, 0, 310, 900));
+                        content.UpdateLayout();
+                        Save(content, Path.Combine(output, isLight ? "light-settings.png" : "dark-settings.png"));
+                        settingsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        settingsPanel.Visibility.Should().Be(Visibility.Collapsed);
                         for (var i = 0; i < tabs.Items.Count; i++)
                         {
                             tabs.SelectedIndex = i;
@@ -173,12 +216,34 @@ public class ThemeAndHighlightTests
                             }
                             if (page is EquipmentBrowseView equipmentView)
                             {
+                                ((ListBox)equipmentView.FindName("TypeFilterList")).Items.Cast<string>()
+                                    .Should().Equal("", "普通", "转职");
+                                ((ListBox)equipmentView.FindName("CategoryFilterList")).Items.Cast<string>()
+                                    .Should().Equal("", "攻击", "防御", "生存", "技力", "经济", "盟约", "其他");
+                                // “同时选中”复选框 + 空列表提示
+                                var categoryMatchAll = (CheckBox)equipmentView.FindName("CategoryMatchAllToggle");
+                                categoryMatchAll.Should().NotBeNull();
+                                var emptyText = (TextBlock)equipmentView.FindName("EmptyFilterText");
+                                emptyText.Visibility.Should().Be(Visibility.Collapsed);
+                                equipmentVm.SelectedCategoryFilters = ["技力", "经济"];
+                                content.UpdateLayout();
+                                equipmentVm.FilteredEquipment.Should().HaveCount(9);
+                                categoryMatchAll.IsChecked = true;
+                                content.UpdateLayout();
+                                equipmentVm.CategoryMatchAll.Should().BeTrue();
+                                equipmentVm.FilteredEquipment.Should().BeEmpty();
+                                emptyText.Visibility.Should().Be(Visibility.Visible);
+                                emptyText.Text.Should().Be("没有同时满足所选条件的装备");
+                                categoryMatchAll.IsChecked = false;
+                                equipmentVm.SelectedCategoryFilters = [];
+                                content.UpdateLayout();
+                                emptyText.Visibility.Should().Be(Visibility.Collapsed);
                                 ((System.Windows.Controls.Primitives.ToggleButton)equipmentView.FindName("FilterToggle")).IsChecked = true;
                                 content.UpdateLayout();
                                 var tiers = (ListBox)equipmentView.FindName("TierFilterList");
                                 tiers.SelectedIndex = 1;
                                 content.UpdateLayout();
-                                equipmentVm.SelectedTierFilter.Should().NotBeNull();
+                                equipmentVm.SelectedTierFilters.Should().ContainSingle();
                                 equipmentVm.FilteredEquipment.Should().HaveCountLessThan(equipment.Count);
                                 var allTier = (ListBoxItem)tiers.ItemContainerGenerator.ContainerFromIndex(0);
                                 var click = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
@@ -190,7 +255,7 @@ public class ThemeAndHighlightTests
                                 content.UpdateLayout();
                                 click.Handled.Should().BeTrue();
                                 tiers.SelectedIndex.Should().Be(0);
-                                equipmentVm.SelectedTierFilter.Should().BeNull();
+                                equipmentVm.SelectedTierFilters.Should().BeEmpty();
                                 equipmentVm.FilteredEquipment.Should().HaveCount(equipment.Count);
 
                                 var cards = Descendants<EquipmentCard>(equipmentView).ToList();
@@ -248,8 +313,7 @@ public class ThemeAndHighlightTests
                             }
                             if (page is TrackingView trackingView)
                             {
-                                var multiToggle = (CheckBox)trackingView.FindName("MultiLineupTrackingToggle");
-                                multiToggle.IsChecked = true;
+                                trackingView.FindName("MultiLineupTrackingToggle").Should().BeNull();
                                 trackingVm.TrackMultipleLineups.Should().BeTrue();
                                 var trackedCards = Descendants<OperatorCard>(trackingView).ToList();
                                 trackedCards.Should().HaveCount(2);
@@ -315,6 +379,17 @@ public class ThemeAndHighlightTests
             if (child is T result) yield return result;
             foreach (var descendant in Descendants<T>(child)) yield return descendant;
         }
+    }
+
+    private static void WaitForPreferenceSave(UIElement control)
+    {
+        var timer = System.Diagnostics.Stopwatch.StartNew();
+        while (!control.IsEnabled && timer.Elapsed < TimeSpan.FromSeconds(5))
+        {
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+            Thread.Sleep(1);
+        }
+        control.IsEnabled.Should().BeTrue("the preference write should complete");
     }
 
     private static void Save(FrameworkElement element, string path)

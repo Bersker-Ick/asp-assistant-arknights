@@ -139,10 +139,86 @@ public partial class OperatorBrowseView : UserControl
         e.Handled = true;
     }
 
+    private bool _suppressTierSelectionChanged;
+
     private void OnTierFilterChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (_suppressTierSelectionChanged) return;
+        UpdateTierFiltersInVm();
+    }
+
+    private void UpdateTierFiltersInVm()
+    {
         if (DataContext is not OperatorBrowseViewModel vm) return;
-        vm.SelectedTierFilter = TierFilterList.SelectedItem as int?;
+        vm.SelectedTierFilters = TierFilterList.SelectedItems.OfType<int>().ToList();
+    }
+
+    /// <summary>等阶多选：点「全部」清空本行，点具体阶位取消「全部」，全部取消时回落到「全部」。</summary>
+    private void OnTierFilterPreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        var container = ItemsControl.ContainerFromElement(TierFilterList, e.OriginalSource as DependencyObject)
+            as ListBoxItem;
+        if (container == null) return;
+
+        int index = TierFilterList.ItemContainerGenerator.IndexFromContainer(container);
+        _suppressTierSelectionChanged = true;
+
+        if (index == 0)
+        {
+            // 「全部」的列表项是 null，WPF 不允许直接选中 null 项，只能按索引选择
+            TierFilterList.SelectedItems.Clear();
+            TierFilterList.SelectedIndex = 0;
+        }
+        else
+        {
+            container.IsSelected = !container.IsSelected;
+            if (TierFilterList.SelectedIndex == 0)
+            {
+                TierFilterList.SelectedItems.Clear();
+                if (container.IsSelected) TierFilterList.SelectedItems.Add(container.Content);
+            }
+
+            bool anySelected = false;
+            for (int i = 1; i < TierFilterList.Items.Count; i++)
+            {
+                if (TierFilterList.ItemContainerGenerator.ContainerFromIndex(i) is ListBoxItem item && item.IsSelected)
+                {
+                    anySelected = true;
+                    break;
+                }
+            }
+            if (!anySelected)
+            {
+                TierFilterList.SelectedItems.Clear();
+                TierFilterList.SelectedIndex = 0;
+            }
+        }
+
+        _suppressTierSelectionChanged = false;
+        UpdateTierFiltersInVm();
+        e.Handled = true;
+    }
+
+    /// <summary>把所有筛选行恢复为「全部」，再清空 VM 里的筛选状态（含搜索与「同时选中」）。</summary>
+    private void OnResetFiltersClicked(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not OperatorBrowseViewModel vm) return;
+
+        SelectOnlyFirst(AvailabilityFilterList);
+        SelectOnlyFirst(TierFilterList);
+        SelectOnlyFirst(CoreCovenantFilterList);
+        SelectOnlyFirst(OtherCovenantFilterList);
+        SelectOnlyFirst(TraitFilterList);
+        SelectOnlyFirst(TriggerTimingFilterList);
+        UpdateTierFiltersInVm();
+        UpdateCovenantFiltersInVm();
+        vm.ResetFilters();
+    }
+
+    private static void SelectOnlyFirst(ListBox list)
+    {
+        list.SelectedItems.Clear();
+        if (list.Items.Count > 0) list.SelectedIndex = 0;
     }
 
     private void OnTraitFilterChanged(object sender, SelectionChangedEventArgs e)

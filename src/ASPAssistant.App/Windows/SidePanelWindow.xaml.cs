@@ -1,6 +1,7 @@
 // Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md.
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
@@ -36,6 +37,8 @@ public partial class SidePanelWindow : Window
 
     private UpdateService? _updateService;
     private readonly SettingsManager _settingsManager;
+    public GameShopTheme GameTheme { get; private set; }
+    public event Action<GameShopTheme>? GameThemeChanged;
     private UpdateInfo? _pendingUpdate;
     private Task? _downloadTask;
     private bool _isDownloadReady;
@@ -73,7 +76,8 @@ public partial class SidePanelWindow : Window
         LineupShareService lineupShareService,
         IReadOnlyList<Operator> allOperators,
         IReadOnlyList<Equipment> allEquipment,
-        SettingsManager settingsManager)
+        SettingsManager settingsManager,
+        GameShopTheme gameTheme)
     {
         OperatorBrowseVm = operatorVm;
         EquipmentBrowseVm = equipmentVm;
@@ -86,10 +90,16 @@ public partial class SidePanelWindow : Window
         _allOperators = allOperators;
         _allEquipment = allEquipment;
         _settingsManager = settingsManager;
+        GameTheme = gameTheme;
 
         InitializeComponent();
-        ThemeToggleButton.Content = ThemeManager.IsLight ? "☾" : "☀";
-        ThemeToggleButton.ToolTip = ThemeManager.IsLight ? "切换为黑色主题" : "切换为白色主题";
+        UiThemeSelector.SelectedIndex = ThemeManager.IsLight ? 1 : 0;
+        GameThemeSelector.SelectedIndex = (int)gameTheme;
+        MultiLineupTrackingToggle.IsChecked = trackingVm.TrackMultipleLineups;
+        UiThemeSelector.SelectionChanged += OnUiThemeChanged;
+        GameThemeSelector.SelectionChanged += OnGameThemeChanged;
+        MultiLineupTrackingToggle.Checked += OnMultipleLineupsChanged;
+        MultiLineupTrackingToggle.Unchecked += OnMultipleLineupsChanged;
 
         _toastHideTimer = new DispatcherTimer
         {
@@ -193,7 +203,14 @@ public partial class SidePanelWindow : Window
         await Task.Delay(3000);
 
         var info = await _updateService.CheckForUpdateAsync();
-        if (info is null) return;
+        if (info is null)
+        {
+            // Keep the failure visible in the log instead of swallowing it: a silent
+            // updater looks identical to "no new version" and is impossible to diagnose.
+            if (!string.IsNullOrEmpty(_updateService.LastError))
+                AppLogger.Warn("Update", $"Update check failed: {_updateService.LastError}");
+            return;
+        }
 
         // Skip if user previously asked to skip this version
         if (_settingsManager is not null)
@@ -237,12 +254,14 @@ public partial class SidePanelWindow : Window
                 UpdateActionText.Text = "立即重启";
             });
         }
-        catch
+        catch (Exception ex)
         {
+            var reason = UpdateService.DescribeError(ex);
+            AppLogger.Warn("Update", $"Download or apply failed: {reason}");
             Dispatcher.Invoke(() =>
             {
                 UpdateBannerProgress.Visibility = Visibility.Collapsed;
-                UpdateBannerText.Text = $"下载失败，点击重试";
+                UpdateBannerText.Text = $"下载失败（{reason}），点击重试";
                 UpdateActionIcon.Text = "↺ ";
                 UpdateActionText.Text = "重试";
             });
@@ -424,29 +443,57 @@ public partial class SidePanelWindow : Window
         WindowState = WindowState.Minimized;
     }
 
-    private async void OnThemeToggle(object sender, RoutedEventArgs e)
+    private void OnToggleSettings(object sender, RoutedEventArgs e)
     {
-        ThemeToggleButton.IsEnabled = false;
-        ThemeManager.Apply(!ThemeManager.IsLight);
-        ThemeToggleButton.Content = ThemeManager.IsLight ? "☾" : "☀";
-        ThemeToggleButton.ToolTip = ThemeManager.IsLight ? "切换为黑色主题" : "切换为白色主题";
+        SettingsPanel.Visibility = SettingsPanel.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private async void OnUiThemeChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (UiThemeSelector.SelectedIndex < 0) return;
+        ThemeManager.Apply(UiThemeSelector.SelectedIndex == 1);
+        await SavePreferenceAsync(() => _settingsManager.SaveLightThemeAsync(ThemeManager.IsLight), UiThemeSelector);
+    }
+
+    private async void OnGameThemeChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (GameThemeSelector.SelectedIndex < 0) return;
+        GameTheme = (GameShopTheme)GameThemeSelector.SelectedIndex;
+        GameThemeChanged?.Invoke(GameTheme);
+        await SavePreferenceAsync(() => _settingsManager.SaveGameShopThemeAsync(GameTheme), GameThemeSelector);
+    }
+
+    private async void OnMultipleLineupsChanged(object sender, RoutedEventArgs e)
+    {
+        TrackingVm.TrackMultipleLineups = MultiLineupTrackingToggle.IsChecked == true;
+        await SavePreferenceAsync(() => _settingsManager.SaveTrackMultipleLineupsAsync(TrackingVm.TrackMultipleLineups), MultiLineupTrackingToggle);
+    }
+
+    private async Task SavePreferenceAsync(Func<Task> save, UIElement control)
+    {
+        control.IsEnabled = false;
         try
         {
-            await _settingsManager.SaveLightThemeAsync(ThemeManager.IsLight);
+            await save();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            AppLogger.Warn("Theme", $"Could not save theme: {ex.Message}");
-            ShowToast("主题已切换，但偏好保存失败");
+            AppLogger.Warn("Settings", $"Could not save preference: {ex.Message}");
+            ShowToast("设置已生效，但保存失败");
         }
         finally
         {
-            ThemeToggleButton.IsEnabled = true;
+            control.IsEnabled = true;
         }
     }
 
     private void OnClose(object sender, RoutedEventArgs e)
     {
+        var confirm = MessageBox.Show(this,
+            "确定要关闭 ASP Assistant · Arknights 吗？\n关闭后识别、悬浮提示与快捷键都会停止。",
+            "退出确认", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
+        if (confirm != MessageBoxResult.Yes) return;
+
         User32.UnregisterHotKey(new WindowInteropHelper(this).Handle, HotkeyIdManualScan);
         Application.Current.Shutdown();
     }

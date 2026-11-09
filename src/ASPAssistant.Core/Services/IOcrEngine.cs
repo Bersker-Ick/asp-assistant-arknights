@@ -1,3 +1,4 @@
+// Modified for ASP Assistant Arknights on 2026-11-09; see MODIFICATIONS.md.
 namespace ASPAssistant.Core.Services;
 
 /// <summary>
@@ -19,6 +20,10 @@ public interface IOcrEngine
     /// Returns all recognized text segments with their absolute pixel boxes.
     /// </summary>
     Task<IReadOnlyList<OcrTextResult>> RecognizeRegionAsync(
+        byte[] pngBytes, int x, int y, int width, int height);
+
+    /// <summary>Reads one precisely cropped line without text detection.</summary>
+    Task<IReadOnlyList<OcrTextResult>> RecognizeLineAsync(
         byte[] pngBytes, int x, int y, int width, int height);
 
     /// <summary>

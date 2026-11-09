@@ -36,10 +36,6 @@
                 </ItemsControl>
             </Border>
 
-            <CheckBox x:Name="MultiLineupTrackingToggle" Content="同时追踪多个队伍"
-                      IsChecked="{Binding TrackMultipleLineups, Mode=TwoWay}"
-                      Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12" Margin="0,0,0,10"
-                      ToolTip="开启后，追踪新阵容会追加干员和装备；关闭后下次追踪会替换当前列表" />
             <DockPanel Margin="0,0,0,4">
                 <TextBlock DockPanel.Dock="Left" FontSize="12" FontWeight="Bold"
                            VerticalAlignment="Center"

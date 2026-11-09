@@ -18,6 +18,9 @@
     <SolidColorBrush x:Key="AccentBorderBrush" Color="#554FC3F7" />
     <SolidColorBrush x:Key="AccentStrongBorderBrush" Color="#664FC3F7" />
     <SolidColorBrush x:Key="AccentPressedBrush" Color="#884FC3F7" />
+    <SolidColorBrush x:Key="FilterSelectedBrush" Color="#FF4FC3F7" />
+    <SolidColorBrush x:Key="FilterSelectedTintBrush" Color="#1F4FC3F7" />
+    <SolidColorBrush x:Key="FilterSelectedSoftBrush" Color="#334FC3F7" />
     <SolidColorBrush x:Key="NeutralFaintBrush" Color="#0AFFFFFF" />
     <SolidColorBrush x:Key="ScrollTrackBrush" Color="#0DFFFFFF" />
     <SolidColorBrush x:Key="SoftBorderBrush" Color="#11FFFFFF" />

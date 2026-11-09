@@ -25,7 +25,7 @@ public class OperatorBrowseViewModelTests
     {
         var vm = new OperatorBrowseViewModel();
         vm.LoadOperators(TestOperators);
-        vm.SelectedTierFilter = 4;
+        vm.SelectedTierFilters = [4];
         vm.FilteredOperators.Should().HaveCount(1);
         vm.FilteredOperators[0].Name.Should().Be("角峰");
     }

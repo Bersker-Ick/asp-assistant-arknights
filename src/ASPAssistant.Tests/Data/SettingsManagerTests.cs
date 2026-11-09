@@ -62,4 +62,32 @@ public class SettingsManagerTests : IDisposable
         (await _manager.LoadLightThemeAsync()).Should().BeFalse();
     }
 
+    [Fact]
+    public async Task NewPreferences_DefaultToTerminalAndSingleLineup()
+    {
+        (await _manager.LoadGameShopThemeAsync()).Should().Be(GameShopTheme.Terminal);
+        (await _manager.LoadTrackMultipleLineupsAsync()).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData(GameShopTheme.Terminal)]
+    [InlineData(GameShopTheme.Ursus)]
+    [InlineData(GameShopTheme.Closure)]
+    public async Task GameShopTheme_PersistsAcrossManagerInstances(GameShopTheme theme)
+    {
+        await _manager.SaveGameShopThemeAsync(theme);
+        (await new SettingsManager(_tempDir).LoadGameShopThemeAsync()).Should().Be(theme);
+        (await File.ReadAllTextAsync(Path.Combine(_tempDir, "game-theme.json")))
+            .Should().Be($"\"{theme}\"");
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task MultipleLineups_PersistsAcrossManagerInstances(bool enabled)
+    {
+        await _manager.SaveTrackMultipleLineupsAsync(enabled);
+        (await new SettingsManager(_tempDir).LoadTrackMultipleLineupsAsync()).Should().Be(enabled);
+    }
+
 }

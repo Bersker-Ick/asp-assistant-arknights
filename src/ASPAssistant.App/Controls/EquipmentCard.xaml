@@ -18,8 +18,25 @@
                            Foreground="{DynamicResource TextPrimaryBrush}"
                            FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap" />
             </DockPanel>
+            <!-- Function categories (攻击/防御/生存/技力/经济/盟约/其他) -->
+            <ItemsControl x:Name="CategoryChips" ItemsSource="{Binding Categories}" Margin="0,0,0,6">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{DynamicResource NeutralTintBrush}" CornerRadius="4"
+                                Padding="5,1" Margin="0,0,4,0">
+                            <TextBlock Text="{Binding}" FontSize="10"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
             <DockPanel>
-                <Border DockPanel.Dock="Left" Width="72" Height="72" Margin="0,0,8,0"
+                <Border DockPanel.Dock="Left" Width="56" Height="56" Margin="0,0,8,0"
                         CornerRadius="4" Background="{DynamicResource NeutralHoverBrush}" VerticalAlignment="Top"
                         ClipToBounds="True">
                     <Image x:Name="IconImage" Stretch="UniformToFill" />

@@ -161,18 +161,19 @@
     <Style x:Key="FilterChipItem" TargetType="ListBoxItem" BasedOn="{StaticResource ClickableListBoxItemBase}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SoftBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="7,2" />
-        <Setter Property="Margin" Value="0,0,4,4" />
+        <Setter Property="Padding" Value="9,3" />
+        <Setter Property="Margin" Value="0,0,6,6" />
         <Setter Property="FontSize" Value="11" />
+        <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
                     <Border x:Name="bg" Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="10" Padding="{TemplateBinding Padding}">
+                            CornerRadius="12" Padding="{TemplateBinding Padding}">
                         <ContentPresenter />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -181,25 +182,95 @@
                             <Setter Property="Foreground" Value="{DynamicResource AvailableBrush}" />
                             <Setter Property="FontWeight" Value="SemiBold" />
                         </Trigger>
+                        <!-- Selected: tinted fill + coloured text/border (light theme uses orange) -->
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource AccentBrush}" />
-                            <Setter TargetName="bg" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-                            <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
+                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource FilterSelectedTintBrush}" />
+                            <Setter TargetName="bg" Property="BorderBrush" Value="{DynamicResource FilterSelectedBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource FilterSelectedBrush}" />
                             <Setter Property="FontWeight" Value="SemiBold" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource AccentHoverBrush}" />
-                            <Setter TargetName="bg" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource NeutralTintBrush}" />
+                            <Setter TargetName="bg" Property="BorderBrush" Value="{DynamicResource NeutralStrongBrush}" />
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsSelected" Value="True" />
                                 <Condition Property="IsMouseOver" Value="True" />
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource AccentBrush}" />
+                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource FilterSelectedSoftBrush}" />
+                            <Setter TargetName="bg" Property="BorderBrush" Value="{DynamicResource FilterSelectedBrush}" />
                         </MultiTrigger>
                         <Trigger Property="Tag" Value="available">
                             <Setter TargetName="bg" Property="BorderBrush" Value="{DynamicResource AvailableBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Filter group header: 11px semibold label with a hairline running to the right -->
+    <Style x:Key="FilterGroupHeader" TargetType="ContentControl">
+        <Setter Property="Margin" Value="0,0,0,6" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <DockPanel LastChildFill="True">
+                        <ContentPresenter DockPanel.Dock="Left" VerticalAlignment="Center"
+                                          TextElement.FontSize="11"
+                                          TextElement.FontWeight="SemiBold"
+                                          TextElement.Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <Border Height="1" Margin="8,0,0,0" VerticalAlignment="Center"
+                                Background="{DynamicResource SoftBorderBrush}" />
+                    </DockPanel>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Filter toggle: pill button with an arrow and an active-filter count badge -->
+    <Style x:Key="FilterTogglePill" TargetType="ToggleButton" BasedOn="{StaticResource ClickableToggleButtonBase}">
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="pill" CornerRadius="12" Padding="10,4"
+                            Background="{DynamicResource NeutralTintBrush}"
+                            BorderBrush="{DynamicResource SoftBorderBrush}" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock x:Name="arrow" Text="▸" FontSize="10" Margin="0,0,6,0"
+                                       VerticalAlignment="Center" />
+                            <ContentPresenter VerticalAlignment="Center" />
+                            <Border x:Name="countBadge" Margin="6,0,0,0" CornerRadius="8" Padding="5,0"
+                                    VerticalAlignment="Center"
+                                    Background="{DynamicResource FilterSelectedTintBrush}">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ActiveFilterCount}" Value="0">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding ActiveFilterCount}" FontSize="10" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource FilterSelectedBrush}" />
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="arrow" Property="Text" Value="▾" />
+                            <Setter TargetName="pill" Property="Background" Value="{DynamicResource FilterSelectedTintBrush}" />
+                            <Setter TargetName="pill" Property="BorderBrush" Value="{DynamicResource FilterSelectedBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource FilterSelectedBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="pill" Property="BorderBrush" Value="{DynamicResource NeutralStrongBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

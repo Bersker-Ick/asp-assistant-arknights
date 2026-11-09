@@ -119,6 +119,7 @@ public partial class App : Application
         var dataStore = new JsonDataStore(dataDir);
         _settingsManager = new SettingsManager(settingsDir);
         ThemeManager.Apply(await _settingsManager.LoadLightThemeAsync());
+        var gameTheme = await _settingsManager.LoadGameShopThemeAsync();
 
         // Load data
         AppLogger.Info("App", "Loading operators...");
@@ -166,7 +167,10 @@ public partial class App : Application
         var equipmentVm = new EquipmentBrowseViewModel();
         equipmentVm.LoadEquipment(equipment, covenantNames, manualJobChangeEquipments, jobChangeEquipmentToCovenant);
 
-        var trackingVm = new TrackingViewModel();
+        var trackingVm = new TrackingViewModel
+        {
+            TrackMultipleLineups = await _settingsManager.LoadTrackMultipleLineupsAsync()
+        };
         trackingVm.LoadEntries(trackingEntries);
 
         var gameStateVm = new GameStateViewModel();
@@ -186,7 +190,7 @@ public partial class App : Application
         var captureService = new ScreenCaptureService();
         var ocrEngine = new MaaOcrEngine(dataDir);
         var shopReader = new ShopReader(ocrEngine,
-            operators.Select(o => o.Name).Concat(equipment.Select(e => e.Name)).Distinct().ToList());
+            operators.Select(o => o.Name).Concat(equipment.Select(e => e.Name)).Distinct().ToList()) { Theme = gameTheme };
         var banIconMatcher = new MaaBanIconMatcher(dataDir);
         // Covenant groups come from covenants.json (bondType), not from the operator roster:
         // a covenant with no operator in the local data set (a new season addition) must
@@ -236,7 +240,8 @@ public partial class App : Application
         var sidePanel = _sidePanel = new SidePanelWindow(
             operatorVm, equipmentVm, trackingVm, gameStateVm, banVm, enemyVm,
             lineupVm, lineupShareService,
-            operators, equipment, _settingsManager);
+            operators, equipment, _settingsManager, gameTheme);
+        sidePanel.GameThemeChanged += theme => shopReader.Theme = theme;
         var overlay = _overlay = new OverlayWindow()
         {
 #if DEBUG
