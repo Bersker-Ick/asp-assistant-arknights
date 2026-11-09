@@ -1,5 +1,5 @@
+﻿// Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md.
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using System.Text.Json;
 using ASPAssistant.Core.Models;
 
@@ -24,8 +24,6 @@ public sealed class BossDataService
 
     private List<(string Key, string CanonicalName)> _bossOcrMatchPairs = [];
 
-    /// <summary>Stable list for multi-fragment OCR fallback (same order as JSON).</summary>
-    private List<BossInfo> _bossesForFragmentMatch = [];
 
     /// <summary>
     /// Loads <c>bosses.json</c> from the given data directory.
@@ -39,7 +37,6 @@ public sealed class BossDataService
             AppLogger.Warn("BossData", $"bosses.json not found at {path}");
             _byName = [];
             _bossOcrMatchPairs = [];
-            _bossesForFragmentMatch = [];
             return;
         }
 
@@ -84,7 +81,6 @@ public sealed class BossDataService
 
             _bossOcrMatchPairs.Sort((a, b) => b.Key.Length.CompareTo(a.Key.Length));
 
-            _bossesForFragmentMatch = [.. bosses];
 
             AppLogger.Info("BossData",
                 $"Loaded {_byName.Count} boss lookup keys, {_bossOcrMatchPairs.Count} OCR match keys from {path} ({bosses.Count} entries)");
@@ -94,7 +90,6 @@ public sealed class BossDataService
             AppLogger.Warn("BossData", $"Failed to load bosses.json: {ex.Message}");
             _byName = [];
             _bossOcrMatchPairs = [];
-            _bossesForFragmentMatch = [];
         }
     }
 
@@ -111,207 +106,23 @@ public sealed class BossDataService
         target.Add((key, canonicalName));
     }
 
-    /// <summary>
-    /// Finds the canonical boss display name: (1) substring on raw/normalized text;
-    /// (2) multi-fragment match when OCR splits a name across lines (quotes/punctuation normalized).
+    /// <summary>Matches complete names/aliases across OCR lines, ignoring punctuation.
+    /// Do not use one-character fuzzy matching: 假想敌：鳍 must not become 假想敌：胄.
     /// </summary>
     public bool TryMatchBossFromOcr(IReadOnlyList<string> ocrLines, [NotNullWhen(true)] out string? canonicalName)
     {
         canonicalName = null;
-        if (_bossOcrMatchPairs.Count == 0 && _bossesForFragmentMatch.Count == 0)
-            return false;
-
-        var merged = string.Concat(ocrLines);
-        if (TryMatchHaystack(merged, out canonicalName))
-            return true;
-
-        var mergedNorm = NormalizeOcrForMatch(merged);
-        if (mergedNorm.Length > 0 && TryMatchHaystackNormalized(mergedNorm, out canonicalName))
-            return true;
-
-        foreach (var line in ocrLines)
-        {
-            if (TryMatchHaystack(line, out canonicalName))
-                return true;
-            var ln = NormalizeOcrForMatch(line);
-            if (ln.Length > 0 && TryMatchHaystackNormalized(ln, out canonicalName))
-                return true;
-        }
-
-        if (TryMatchByNameFragments(mergedNorm, merged, out canonicalName))
-            return true;
-
-        return false;
-    }
-
-    private bool TryMatchHaystack(string haystack, [NotNullWhen(true)] out string? canonicalName)
-    {
-        canonicalName = null;
-        if (string.IsNullOrEmpty(haystack))
-            return false;
-
+        var text = new string(string.Concat(ocrLines).Where(char.IsLetterOrDigit).ToArray());
         foreach (var (key, canonical) in _bossOcrMatchPairs)
         {
-            if (haystack.Contains(key, StringComparison.Ordinal))
+            var normalized = new string(key.Where(char.IsLetterOrDigit).ToArray());
+            if (text.Contains(normalized, StringComparison.Ordinal))
             {
                 canonicalName = canonical;
                 return true;
             }
         }
-
         return false;
-    }
-
-    /// <summary>Like <see cref="TryMatchHaystack"/> but keys are normalized the same way as OCR lines.</summary>
-    private bool TryMatchHaystackNormalized(string hayNormalized, [NotNullWhen(true)] out string? canonicalName)
-    {
-        canonicalName = null;
-        foreach (var (key, canonical) in _bossOcrMatchPairs)
-        {
-            var kn = NormalizeOcrForMatch(key);
-            if (kn.Length < 2)
-                continue;
-            if (hayNormalized.Contains(kn, StringComparison.Ordinal))
-            {
-                canonicalName = canonical;
-                return true;
-            }
-        }
-
-        // OCR fallback: allow one-character difference in a contiguous segment.
-        // This handles cases like "假想敌：统" vs canonical "假想敌：铳".
-        foreach (var (key, canonical) in _bossOcrMatchPairs)
-        {
-            var kn = NormalizeOcrForMatch(key);
-            if (kn.Length < 3)
-                continue;
-            if (ContainsApproximateSubstring(hayNormalized, kn, maxDiff: 1))
-            {
-                canonicalName = canonical;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static bool ContainsApproximateSubstring(string hay, string needle, int maxDiff)
-    {
-        if (string.IsNullOrEmpty(hay) || string.IsNullOrEmpty(needle) || hay.Length < needle.Length)
-            return false;
-
-        int n = needle.Length;
-        for (int i = 0; i <= hay.Length - n; i++)
-        {
-            int diff = 0;
-            for (int j = 0; j < n; j++)
-            {
-                if (hay[i + j] == needle[j])
-                    continue;
-                diff++;
-                if (diff > maxDiff)
-                    break;
-            }
-
-            if (diff <= maxDiff)
-                return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// When the full boss name never appears contiguously, require every derived fragment
-    /// (e.g. 卢西恩 + 猩红血钻) to appear in the combined OCR. More specific bosses first.
-    /// </summary>
-    private bool TryMatchByNameFragments(
-        string hayNormalized,
-        string hayOriginal,
-        [NotNullWhen(true)] out string? canonicalName)
-    {
-        canonicalName = null;
-        if (_bossesForFragmentMatch.Count == 0)
-            return false;
-
-        foreach (var boss in _bossesForFragmentMatch
-                     .OrderByDescending(b => b.Name.Length)
-                     .ThenByDescending(b => GetBossNameFragments(b).Count))
-        {
-            var frags = GetBossNameFragments(boss);
-            if (frags.Count == 0)
-                continue;
-
-            if (frags.All(f =>
-                    hayNormalized.Contains(f, StringComparison.Ordinal)
-                    || hayOriginal.Contains(f, StringComparison.Ordinal)))
-            {
-                canonicalName = boss.Name;
-                return true;
-            }
-
-            foreach (var alias in boss.Aliases ?? [])
-            {
-                if (string.IsNullOrWhiteSpace(alias))
-                    continue;
-                var a = alias.Trim();
-                if (a.Length < 2)
-                    continue;
-                if (hayNormalized.Contains(a, StringComparison.Ordinal)
-                    || hayOriginal.Contains(a, StringComparison.Ordinal))
-                {
-                    canonicalName = boss.Name;
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>Splits display name into non-trivial fragments (handles “ ” quotes).</summary>
-    private static List<string> GetBossNameFragments(BossInfo boss)
-    {
-        var name = boss.Name;
-        if (string.IsNullOrWhiteSpace(name))
-            return [];
-
-        var parts = name.Split(['，', ',', '：', ':', '、'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var frags = new List<string>();
-        foreach (var p in parts)
-        {
-            var t = p.Trim().Trim('"', '\u201c', '\u201d', '\u2018', '\u2019', '「', '」', '『', '』');
-            if (t.Length >= 2)
-                frags.Add(t);
-            else if (t.Length == 1 && parts.Length >= 2)
-                frags.Add(t);
-        }
-
-        if (frags.Count >= 2)
-            return frags;
-
-        var one = NormalizeOcrForMatch(name);
-        if (one.Length >= 4)
-            return [one];
-
-        return [];
-    }
-
-    /// <summary>Strips OCR-noisy punctuation so split names can still match across segments.</summary>
-    private static string NormalizeOcrForMatch(string s)
-    {
-        if (string.IsNullOrEmpty(s))
-            return "";
-
-        var sb = new StringBuilder(s.Length);
-        foreach (var c in s)
-        {
-            if (c is '"' or '\u201c' or '\u201d' or '\u2018' or '\u2019' or '\u00a0'
-                or '「' or '」' or '『' or '』' or '\'' or ' ')
-                continue;
-            sb.Append(c);
-        }
-
-        return sb.ToString();
     }
 
     /// <summary>

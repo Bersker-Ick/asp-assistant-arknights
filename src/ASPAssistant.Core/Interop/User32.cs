@@ -1,3 +1,4 @@
+﻿// Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md.
 using System.Runtime.InteropServices;
 
 namespace ASPAssistant.Core.Interop;
@@ -65,6 +66,7 @@ public static class User32
     public const int WS_EX_TRANSPARENT = 0x00000020;
     public const int WS_EX_LAYERED = 0x00080000;
     public const int WS_EX_TOOLWINDOW = 0x00000080;
+    public const int WS_EX_NOACTIVATE = 0x08000000;
 
     [DllImport("user32.dll")]
     public static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);

@@ -1,3 +1,4 @@
+﻿// Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md.
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
@@ -50,7 +51,7 @@ public partial class OverlayWindow : Window
         var hwnd = new WindowInteropHelper(this).Handle;
         var exStyle = User32.GetWindowLong(hwnd, User32.GWL_EXSTYLE);
         User32.SetWindowLong(hwnd, User32.GWL_EXSTYLE,
-            exStyle | User32.WS_EX_TRANSPARENT | User32.WS_EX_TOOLWINDOW);
+            exStyle | User32.WS_EX_TRANSPARENT | User32.WS_EX_TOOLWINDOW | User32.WS_EX_NOACTIVATE);
     }
 
     public void UpdatePosition(RECT gameClientRect)
@@ -91,6 +92,7 @@ public partial class OverlayWindow : Window
 
             if (_markerPool.TryGetValue(item.Id, out var existing))
             {
+                if (Math.Abs(Canvas.GetLeft(existing) - mx) < 6 && Math.Abs(Canvas.GetTop(existing) - my) < 6) continue;
                 Canvas.SetLeft(existing, mx);
                 Canvas.SetTop(existing, my);
                 AppLogger.Info("Overlay", $"Repositioned marker '{item.Id}' to ({mx:F1},{my:F1})");
@@ -219,9 +221,9 @@ public partial class OverlayWindow : Window
     /// </summary>
     private (double X, double Y) ComputeMarkerPosition(ShopItem item)
     {
-        // Place marker just inside the card's top-right corner.
-        var mx = (item.OcrRegion.X + item.OcrRegion.Width) * ActualWidth - MarkerSize - 2;
-        var my = item.OcrRegion.Y * ActualHeight + 2;
+        // Anchor above the detected name, leaving the name and price readable.
+        var mx = (item.OcrRegion.X + item.OcrRegion.Width) * ActualWidth - MarkerSize;
+        var my = item.OcrRegion.Y * ActualHeight - MarkerSize - 2;
 
         mx = Math.Max(0, Math.Min(mx, ActualWidth - MarkerSize));
         my = Math.Max(0, Math.Min(my, ActualHeight - MarkerSize));

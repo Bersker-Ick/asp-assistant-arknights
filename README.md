@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
   <img src="data/icons/aspa_logo.svg" width="96" height="96" alt="ASPA Logo"/>
   <h1>ASP Assistant · 规程适配版</h1>
   <p>明日方舟·卫戍协议 辅助工具<br/>基于 Moonfair/ASP_Assistant 修改，由 MaaFramework 提供图像识别能力。</p>
@@ -8,7 +8,7 @@
     <img src="https://img.shields.io/badge/game-卫戍协议·规程-orange?style=flat-square" alt="卫戍协议·规程"/>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-green?style=flat-square" alt="Apache 2.0"/></a>
   </p>
-  <p><a href="https://github.com/Moonfair/ASP_Assistant">原项目</a> · <a href="MODIFICATIONS.md">修改说明</a> · <a href="https://github.com/bingyunhe/ASP_Assistant-Regulation/issues">问题反馈</a></p>
+  <p><a href="https://github.com/Moonfair/ASP_Assistant">原项目</a> · <a href="MODIFICATIONS.md">修改说明</a> · <a href="https://github.com/bingyunhe/asp-assistant-arknights/issues">问题反馈</a></p>
 </div>
 
 ---
@@ -34,6 +34,8 @@
 
 ASP Assistant 是运行于《明日方舟》游戏窗口旁的侧边辅助工具，提供干员、装备查询，追踪列表、阵容管理与 Ban 位录入。
 
+当前版本为 **v1.1.0**，包含商店追踪、敌人识别与录入稳定性修复。旧版 v1.0.0 用户可从本仓库 Releases 更新。
+
 ### 干员浏览与筛选
 
 - 按等阶、核心盟约、其他盟约、词条类型、触发时机与本局状态筛选，支持名称搜索。
@@ -56,29 +58,42 @@ ASP Assistant 是运行于《明日方舟》游戏窗口旁的侧边辅助工具
 - 勾选“同时追踪多个队伍”后，连续追踪阵容会合并目标并去重；未勾选时，下次追踪阵容会替换列表。
 - 追踪干员同样显示缩略头像、盟约与普通 / 精锐悬停详情。
 - 多队伍共用一份追踪列表，移除目标会从共用列表中移除。
+- 商店名称栏识别同时读取追踪干员和装备，在目标名称上方显示绿色标记；按实际名称位置定位，不固定为五格，已售空槽不挤占其他目标的位置。
+- 灰色卡、冻结雪花与金色扫光均可参与名称识别。装备金光表示可升精锐；角色金光也可能仅表示已持有同名角色，本工具不据此判断三连或升级。
 
 ### 截屏录入 Ban 位
 
-- 保留原项目的截屏录入、OCR 候选范围识别及 MaaFramework 头像匹配流程。
-- 支持多次截屏任务排队及禁用结果显示。
-- 新赛季识别规则的适配范围见下方“当前数据与限制”。
+- 开局信息页自动录入；“截屏录入”按钮及快捷键读取核心盟约、附加盟约、Ban 位和敌人，支持开局后从游戏内重新打开的信息页，无需顶部“确认本局信息”标题。
+- 缩放、最小化、失焦或标题漏读不会重新允许自动录入；看到明确对局画面后才准备识别下一次开局信息页。自动未录入时，可打开局内信息页手动补录。
+- 游戏被其他应用覆盖且不在前台时暂停截屏；请先将游戏置前、打开信息页，再点击录入。截图会短暂隐藏辅助和覆盖层以避免遮挡。
+- 重试过程中保留旧结果，失败只提示；完整有效的新结果才替换 Ban、盟约高亮和敌人。识别忙碌时禁用重复录入，不自动滚动游戏重试。
+
+### 本局敌人识别
+
+- 进入“确认本局信息”页面时自动读取右侧“敌方领袖”和特训敌人，也可在敌人页点击“识别本局敌人”重试。
+- 截图时短暂隐藏辅助窗口及覆盖层，随后恢复显示，避免贴在游戏内部的辅助遮住敌人区域；手动识别不点击或切换游戏页面。
+- 识别中禁用重复请求，显示成功、部分识别或失败状态；重试失败保留并标注上次录入结果。支持首领名称断行、相邻特训类型合并与去重，不固定为两类敌人。
+- 已收录的首领和类型展示现有详情；未收录的“假想敌：鳍”“致命”“复苏”等保留文字并提示缺少资料，可展开核对识别文字。不会用相似名称强行套用其他敌人的资料。
 
 ### 外观与窗口
 
 - 标题栏提供黑白主题切换，记住主题选择。
 - 支持窗口置顶、拖动和缩放；调整五个页面的内容宽度与筛选布局。
-- 开发构建不检查更新；带版本号的发布构建仅检查本仓库 GitHub Releases。
+- 游戏最小化时同步最小化辅助并隐藏标记；恢复游戏后恢复由游戏联动收起的辅助。提前手动最小化的辅助保持最小化。
+- 商店星号忽略小于 6 个界面像素的 OCR 位置变化，减少文字框抖动；明显移动继续跟随。
+- 版本号为 0.0.0 的开发构建跳过更新检查；v1.1.0 发行版仅检查本仓库 GitHub Releases。
 
 ## 当前数据与限制
 
 | 项目 | 状态 |
 | --- | --- |
 | 数据赛季 | 卫戍协议·规程·序列 I，`act3autochess` / `V3_1` |
-| 干员 / 装备 / 盟约 | 141 / 70 / 25 |
+| 干员 / 装备 / 盟约 | 141 / 70 / 26 |
 | 核心转职盟约 | 从游戏表 `giveBondId` 生成映射；其他转职盟约沿用名称匹配 |
-| Ban 位识别 | 沿用原有区域和数量规则，尚未完整适配“规程”；盟约高亮依赖其识别结果 |
+| Ban 位识别 | 单张截图结合图标亮灰与 OCR 名称吸附，支持合并名称拆分；未命名图标会报告，仍受画面布局影响 |
+| 商店追踪识别 | 已用六张 Closure 商店皮肤的 1080p 实拍脱敏图验证，涵盖灰色、冻结、扫光、售空；一本四格、720p 与超宽留边仅经过合成图验证，其他皮肤及原生超宽屏待实测 |
 | 场上与备战区干员识别 | 尚未实现完整识别流程，不作为本版本已完成功能 |
-| 首领 / 敌人数据 | 保留原有数据，尚未同步到本赛季 |
+| 首领 / 敌人 | 新版右侧区域识别流程已通过两张 1080p 实拍图验证；详情保留原有资料，尚未完整同步本赛季，未收录内容单独提示 |
 | 自动更新 | 只读取本仓库发布，未发布 Release 时无可用更新 |
 
 ## 运行要求
@@ -93,22 +108,22 @@ ASP Assistant 是运行于《明日方舟》游戏窗口旁的侧边辅助工具
 
 ## 获取与构建
 
-无需编译的 Windows x64 独立运行包可在 [Releases](https://github.com/bingyunhe/ASP_Assistant-Regulation/releases/latest) 获取。
+无需编译的 Windows x64 独立运行包可在 [Releases](https://github.com/bingyunhe/asp-assistant-arknights/releases/latest) 获取。
 
-1. 下载 `ASPAssistant-v1.0.0-win-x64.zip`，不要选择 `Source code` 源码压缩包。
+1. 下载 `ASPAssistant-v1.1.0-win-x64.zip`，不要选择 `Source code` 源码压缩包。
 2. 右键“全部解压”到独立目录，保留全部文件和 `data`、`runtimes` 文件夹。
 3. 双击 `ASPAssistant.App.exe` 启动。无需另外安装 .NET；包内带有识别模型和所需运行库。
 4. 更新时先退出旧程序，再解压新版。个人追踪与阵容设置存放于本机用户数据目录。
 
-发布页同时提供 `SHA256SUMS.txt`，可用 `Get-FileHash .\ASPAssistant-v1.0.0-win-x64.zip -Algorithm SHA256` 核对下载完整性。详细说明见 [首版发行说明](RELEASE_NOTES.md)。
+发布页同时提供 `SHA256SUMS.txt`，可用 `Get-FileHash .\ASPAssistant-v1.1.0-win-x64.zip -Algorithm SHA256` 核对下载完整性。详细说明见 [本版发行说明](RELEASE_NOTES.md)。
 
 如果需要从源码构建：
 
 安装 .NET 8 SDK 后，在 PowerShell 中运行：
 
 ```powershell
-git clone https://github.com/bingyunhe/ASP_Assistant-Regulation.git
-cd ASP_Assistant-Regulation
+git clone https://github.com/bingyunhe/asp-assistant-arknights.git
+cd asp-assistant-arknights
 dotnet restore ASPAssistant.sln
 dotnet test src/ASPAssistant.Tests/ASPAssistant.Tests.csproj -c Release
 dotnet run --project src/ASPAssistant.App
@@ -170,7 +185,7 @@ python fetch_spdatabase.py --skip-bosses --skip-enemies
 └── MODIFICATIONS.md            # 本衍生版本的变更说明
 ```
 
-个人追踪、阵容、窗口及主题设置存放在本机用户数据目录，不随源码分发。不要把个人配置、游戏截图、日志、密钥或构建缓存提交到仓库。
+个人追踪、阵容、窗口及主题设置存放在本机用户数据目录，不随源码分发。不要把个人配置、未经脱敏的游戏截图、日志、密钥或构建缓存提交到仓库。
 
 ## 开发依赖与致谢
 

@@ -1,3 +1,4 @@
+﻿// Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md.
 using ASPAssistant.Core.Models;
 
 namespace ASPAssistant.Core.Services;
@@ -15,17 +16,16 @@ namespace ASPAssistant.Core.Services;
 ///    fade-out / fade-in flicker.
 ///
 /// <see cref="TryUpdate"/> returns <see langword="true"/> only when the stable set
-/// actually changes (operator added or removed), so callers can skip overlay updates
+/// actually changes (item added, removed or repositioned), so callers can skip overlay updates
 /// on no-op scans.
 /// </summary>
 public sealed class ShopStateStabilizer
 {
     /// <summary>
     /// Number of consecutive scans an operator must be absent before it is
-    /// evicted from the stable set.  At a 200 ms scan interval, a value of 1
-    /// tolerates a single missed frame (~200 ms) before removing a marker.
+    /// evicted from the stable set. A value of 2 tolerates one missed scan.
     /// </summary>
-    public int GracePeriodScans { get; init; } = 1;
+    public int GracePeriodScans { get; init; } = 2;
 
     private readonly Dictionary<string, Entry> _stable = [];
 
@@ -53,6 +53,7 @@ public sealed class ShopStateStabilizer
         {
             if (_stable.TryGetValue(item.Id, out var existing))
             {
+                changed |= existing.Item.OcrRegion != item.OcrRegion;
                 // Card still present — update card boundary and reset miss counter.
                 _stable[item.Id] = existing with { Item = item, MissCount = 0 };
             }

@@ -1,3 +1,4 @@
+﻿// Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md.
 using System.Threading.Channels;
 using System.Timers;
 using ASPAssistant.Core.GameModes;
@@ -10,7 +11,7 @@ public class OcrScannerService : IDisposable
 {
     private readonly ScreenCaptureService _captureService;
     private readonly IOcrStrategy _ocrStrategy;
-    private readonly ICardDetector _cardDetector;
+    private readonly ShopReader _shopReader;
     private readonly IOcrEngine _ocrEngine;
     private readonly GameState.GameState _gameState;
     private readonly Func<IReadOnlyList<string>> _getTrackedNames;
@@ -29,10 +30,10 @@ public class OcrScannerService : IDisposable
 
     // Ban screen detection state machine.
     private bool _banScreenActive;
-    private int _banScreenConsecutiveTicks;
+    private readonly InformationScreenState _informationState = new();
+    private readonly InformationScreenDetector _informationDetector;
     private int _banScreenAbsentTicks;
     private volatile bool _pauseBanScreenDetection;
-    private const int BanDetectThreshold = 2;
     private const int BanLostThreshold   = 3;
 
     public event Action<GameState.GameState>? GameStateUpdated;
@@ -63,7 +64,7 @@ public class OcrScannerService : IDisposable
     public OcrScannerService(
         ScreenCaptureService captureService,
         IOcrStrategy ocrStrategy,
-        ICardDetector cardDetector,
+        ShopReader shopReader,
         IOcrEngine ocrEngine,
         GameState.GameState gameState,
         Func<IReadOnlyList<string>> getTrackedNames,
@@ -73,8 +74,9 @@ public class OcrScannerService : IDisposable
     {
         _captureService = captureService;
         _ocrStrategy = ocrStrategy;
-        _cardDetector = cardDetector;
+        _shopReader = shopReader;
         _ocrEngine = ocrEngine;
+        _informationDetector = new InformationScreenDetector(ocrEngine, ocrStrategy);
         _gameState = gameState;
         _getTrackedNames = getTrackedNames;
         _getAllOperators = getAllOperators;
@@ -101,7 +103,7 @@ public class OcrScannerService : IDisposable
             // Freeze state transitions while overlays cover the game window.
             // Keep _banScreenActive as-is, but clear accumulated edge counters
             // to avoid immediate false lost/detected transitions after resume.
-            _banScreenConsecutiveTicks = 0;
+            _informationState.Suspend();
             _banScreenAbsentTicks = 0;
         }
         AppLogger.Info("BanScreen", $"Ban screen detection paused={paused}");
@@ -117,7 +119,11 @@ public class OcrScannerService : IDisposable
         {
             var screenshot = _captureService.CaptureScreen();
             if (screenshot == null)
+            {
+                _informationState.Suspend();
+                PublishShopItems([]);
                 return;
+            }
 
             // Derive dimensions from the actual PNG bytes so that every downstream
             // coordinate (ROI, card boxes, normalization) lives in the same pixel
@@ -127,53 +133,19 @@ public class OcrScannerService : IDisposable
             if (imgWidth <= 0 || imgHeight <= 0)
                 return;
 
-            var regions = _ocrStrategy.GetScanRegions();
-
             // Ban screen detection runs every tick unless explicitly paused
             // (e.g. when app-owned overlays cover the game window).
             if (!_pauseBanScreenDetection)
-                await DetectBanScreenAsync(screenshot, regions, imgWidth, imgHeight);
+                await DetectBanScreenAsync(screenshot, imgWidth, imgHeight);
 
-            var shopRegion = regions.FirstOrDefault(r => r.Name == "Shop");
-            if (shopRegion == null)
-                return;
-
-            int rx = (int)(shopRegion.XPercent * imgWidth);
-            int ry = (int)(shopRegion.YPercent * imgHeight);
-            int rw = (int)(shopRegion.WidthPercent * imgWidth);
-            int rh = (int)(shopRegion.HeightPercent * imgHeight);
-
-            var trackedNames = _getTrackedNames();
-
-            if (trackedNames.Count == 0)
-                return;
-
-            // Step 1: Detect all operator card boundaries in the shop region.
-            var cardBoxes = await _cardDetector.DetectCardsAsync(screenshot, rx, ry, rw, rh, imgWidth, imgHeight);
-
-            AppLogger.Info("ShopScan",
-                $"img={imgWidth}x{imgHeight} shopRoi=({rx},{ry},{rw},{rh}) cards={cardBoxes.Count} tracking=[{string.Join(", ", trackedNames)}]");
-
-            if (cardBoxes.Count == 0)
-                return;
-
-            // Step 2: For each card, OCR only its name strip and match against tracked names.
-            var rawItems = await MatchTrackedOperatorsAsync(
-                screenshot, cardBoxes, trackedNames, imgWidth, imgHeight);
-
-            AppLogger.Info("ShopScan",
-                $"OCR matched {rawItems.Count}/{cardBoxes.Count} cards: [{string.Join(", ", rawItems.Select(i => $"{i.Name}@({i.OcrRegion.X:F3},{i.OcrRegion.Y:F3})"))}]");
-
-            // Only raise GameStateUpdated when the stable operator set actually changes.
-            bool stabilized = _stabilizer.TryUpdate(rawItems, out var stableItems);
-            AppLogger.Info("ShopScan",
-                $"Stabilizer: changed={stabilized} stable=[{string.Join(", ", stableItems.Select(i => $"{i.Name}(tracked={i.IsTracked})"))}]");
-
-            if (stabilized)
+            if (_pauseBanScreenDetection || _banScreenActive)
             {
-                _gameState.ShopItems = stableItems.ToList();
-                GameStateUpdated?.Invoke(_gameState);
+                PublishShopItems([]);
+                return;
             }
+
+            var rawItems = await _shopReader.ReadAsync(screenshot, imgWidth, imgHeight, _getTrackedNames());
+            PublishShopItems(rawItems);
         }
         catch (Exception ex)
         {
@@ -185,6 +157,14 @@ public class OcrScannerService : IDisposable
         {
             Interlocked.Exchange(ref _scanning, 0);
         }
+    }
+
+    private void PublishShopItems(IReadOnlyList<ShopItem> items)
+    {
+        if (!_stabilizer.TryUpdate(items, out var stableItems))
+            return;
+        _gameState.ShopItems = stableItems.ToList();
+        GameStateUpdated?.Invoke(_gameState);
     }
 
     /// <summary>
@@ -342,51 +322,6 @@ public class OcrScannerService : IDisposable
             BansDetected?.Invoke(_accumulatedBans.ToList());
     }
 
-    private async Task<List<ShopItem>> MatchTrackedOperatorsAsync(
-        byte[] screenshot,
-        IReadOnlyList<(int X, int Y, int W, int H)> cardBoxes,
-        IReadOnlyList<string> trackedNames,
-        int imgWidth,
-        int imgHeight)
-    {
-        var items = new List<ShopItem>();
-
-        for (int i = 0; i < cardBoxes.Count; i++)
-        {
-            var card = cardBoxes[i];
-            int nameX = Math.Max(0, card.X - 80);
-            int nameY = Math.Max(0, card.Y - 80);
-            int nameW = Math.Max(1, card.W + 80);
-            int nameH = Math.Max(1, card.H + 80);
-
-            // Let the OCR engine handle both glyph correction (via its replace table)
-            // and candidate filtering (via the text parameter) in one call.
-            string? matched = await _ocrEngine.FindCandidateInRegionAsync(
-                screenshot, nameX, nameY, nameW, nameH, trackedNames);
-
-            AppLogger.Info("ShopScan",
-                $"Card#{i} box=({card.X},{card.Y},{card.W},{card.H}) ocrRoi=({nameX},{nameY},{nameW},{nameH}) " +
-                $"→ {(matched != null ? $"matched '{matched}'" : "no match")}");
-
-            if (matched == null)
-                continue;
-
-            double nx = card.X / (double)imgWidth;
-            double ny = card.Y / (double)imgHeight;
-            double nw = card.W / (double)imgWidth;
-            double nh = card.H / (double)imgHeight;
-
-            items.Add(new ShopItem
-            {
-                Id = $"{matched}@{card.X}",
-                Name = matched,
-                OcrRegion = (nx, ny, nw, nh),
-            });
-        }
-
-        return items;
-    }
-
     /// <summary>
     /// Mirrors a manual ban/unban into <see cref="_accumulatedBans"/> so subsequent scans
     /// don't re-detect (and re-ban) an operator the user has deliberately unbanned.
@@ -398,57 +333,32 @@ public class OcrScannerService : IDisposable
         AppLogger.Info("OcrScanner", $"Manual ban: {name} -> {(banned ? "banned" : "unbanned")} (accumulated={_accumulatedBans.Count})");
     }
 
-    /// <summary>
-    /// OCRs the BanConfirmText region and updates the ban screen state machine.
-    /// Fires <see cref="BanScreenDetected"/> after <see cref="BanDetectThreshold"/> consecutive
-    /// positive frames, and <see cref="BanScreenLost"/> after <see cref="BanLostThreshold"/>
-    /// consecutive negative frames. This avoids flickering on transient OCR misses.
-    /// </summary>
-    private async Task DetectBanScreenAsync(
-        byte[] screenshot,
-        IReadOnlyList<OcrRegionDefinition> regions,
-        int imgWidth,
-        int imgHeight)
+    /// <summary>Successful manual recording also consumes this opening screen.</summary>
+    public void MarkInformationRecorded() => _informationState.MarkRecorded();
+
+    private async Task DetectBanScreenAsync(byte[] screenshot, int width, int height)
     {
-        var confirmRegion = regions.FirstOrDefault(r => r.Name == "BanConfirmText");
-        if (confirmRegion == null)
-            return;
+        bool opening = await _informationDetector.IsOpeningScreenAsync(screenshot, width, height);
+        bool gameplay = !opening && _informationState.IsConsumed
+            && await _informationDetector.IsGameplayAsync(screenshot, width, height);
+        if (_pauseBanScreenDetection) return;
 
-        int fx = (int)(confirmRegion.XPercent   * imgWidth);
-        int fy = (int)(confirmRegion.YPercent   * imgHeight);
-        int fw = (int)(confirmRegion.WidthPercent  * imgWidth);
-        int fh = (int)(confirmRegion.HeightPercent * imgHeight);
-
-        var ocrResults = await _ocrEngine.RecognizeRegionAsync(screenshot, fx, fy, fw, fh);
-
-        bool detected = ocrResults.Any(r => r.Text.Contains("确认本局信息"));
-
-        if (detected)
+        if (opening)
         {
+            _banScreenActive = true;
             _banScreenAbsentTicks = 0;
-            _banScreenConsecutiveTicks++;
-
-            if (!_banScreenActive && _banScreenConsecutiveTicks >= BanDetectThreshold)
-            {
-                _banScreenActive = true;
-                AppLogger.Info("BanScreen", "Ban selection screen detected");
-                BanScreenDetected?.Invoke();
-            }
         }
-        else
+        else if (_banScreenActive && ++_banScreenAbsentTicks >= BanLostThreshold)
         {
-            _banScreenConsecutiveTicks = 0;
-            _banScreenAbsentTicks++;
-
-            if (_banScreenActive && _banScreenAbsentTicks >= BanLostThreshold)
-            {
-                _banScreenActive = false;
-                AppLogger.Info("BanScreen", "Ban selection screen lost");
-                BanScreenLost?.Invoke();
-            }
+            _banScreenActive = false;
+            BanScreenLost?.Invoke();
+        }
+        if (_informationState.Observe(opening, gameplay))
+        {
+            AppLogger.Info("BanScreen", "Validated opening info screen detected");
+            BanScreenDetected?.Invoke();
         }
     }
-
 
     public void Dispose()
     {

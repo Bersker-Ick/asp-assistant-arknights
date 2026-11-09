@@ -1,3 +1,4 @@
+﻿// Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md.
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -8,6 +9,27 @@ namespace ASPAssistant.Core.ViewModels;
 
 public partial class EnemyViewModel : ObservableObject
 {
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanRecognize))]
+    private bool _isRecognizing;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanRecognize))]
+    private bool _isBanAnalysisRunning;
+
+    public bool CanRecognize => !IsRecognizing && !IsBanAnalysisRunning;
+
+    [ObservableProperty]
+    private string _recognitionStatus = "请先将游戏置前并打开本局信息页，再点击识别。";
+
+    public bool HasRecordedResult { get; private set; }
+
+    [ObservableProperty]
+    private ObservableCollection<string> _unmatchedEntries = [];
+
+    [ObservableProperty]
+    private ObservableCollection<string> _rawTexts = [];
+
     // ── OCR fields ────────────────────────────────────────────────────────────
 
     [ObservableProperty]
@@ -61,6 +83,7 @@ public partial class EnemyViewModel : ObservableObject
     /// <summary>Clears all enemy info before a new recognition run.</summary>
     public void Clear()
     {
+        HasRecordedResult = false;
         BossName           = "";
         AvatarPath         = null;
         BossIndex          = "";
@@ -69,22 +92,43 @@ public partial class EnemyViewModel : ObservableObject
         EnemyTypes.Clear();
         BossAbilities.Clear();
         EnemyTypeDetails.Clear();
+        UnmatchedEntries.Clear();
+        RawTexts.Clear();
+    }
+
+    public void BeginRecognition()
+    {
+        IsRecognizing = true;
+        RecognitionStatus = HasRecordedResult
+            ? "正在重新识别，当前显示上次录入结果…"
+            : "正在识别本局首领和特训敌人…";
+    }
+
+    public void RecognitionFailed(string message)
+    {
+        IsRecognizing = false;
+        RecognitionStatus = HasRecordedResult ? $"{message} 当前保留上次录入结果。" : message;
     }
 
     /// <summary>
     /// Populates the view model from a completed recognition result.
-    /// Both <paramref name="bossInfo"/> and <paramref name="typeEntries"/> may be
-    /// <c>null</c> when the backing services have not finished loading; in that
-    /// case only the raw OCR text fields are populated.
+    /// Null entries mean that the recognized enemy is absent from the local catalogue.
     /// </summary>
     public void Update(
         EnemyResult result,
-        BossInfo? bossInfo = null,
-        IEnumerable<EnemyTypeEntry?>? typeEntries = null)
+        BossInfo? bossInfo,
+        IReadOnlyList<EnemyTypeEntry?> typeEntries)
     {
+        if (result.BossName.Length == 0 && result.EnemyTypes.Count == 0
+            || HasRecordedResult && (result.BossName.Length == 0 || result.EnemyTypes.Count == 0))
+        {
+            RecognitionFailed("本次敌人信息未完整读出，请保持本局信息页可见后重试。");
+            return;
+        }
+        Clear();
         BossName = result.BossName;
+        RawTexts = new ObservableCollection<string>(result.RawTexts);
 
-        EnemyTypes.Clear();
         foreach (var t in result.EnemyTypes)
             EnemyTypes.Add(t);
 
@@ -92,7 +136,6 @@ public partial class EnemyViewModel : ObservableObject
         BossDescription = bossInfo?.Description ?? "";
         BossIndex       = bossInfo?.EnemyIndex ?? "";
         BossDamageSummary = FormatDamageTypes(bossInfo?.DamageTypes);
-        BossAbilities.Clear();
         if (bossInfo is not null)
             foreach (var a in bossInfo.AbilityList)
                 BossAbilities.Add(a);
@@ -101,11 +144,26 @@ public partial class EnemyViewModel : ObservableObject
             : bossInfo!.IconPath.Trim();
 
         // Enemy type cards
-        EnemyTypeDetails.Clear();
-        if (typeEntries is not null)
-            foreach (var e in typeEntries)
-                if (e is not null)
-                    EnemyTypeDetails.Add(e);
+        for (int i = 0; i < typeEntries.Count; i++)
+        {
+            if (typeEntries[i] is { } entry)
+                EnemyTypeDetails.Add(entry);
+            else
+                UnmatchedEntries.Add($"{result.EnemyTypes[i]}：资料未收录");
+        }
+        if (BossName.Length > 0 && bossInfo is null)
+            UnmatchedEntries.Insert(0, $"首领“{BossName}”：资料未收录或名称待核对");
+
+        var missing = new List<string>();
+        if (BossName.Length == 0) missing.Add("首领未读出");
+        if (EnemyTypes.Count == 0) missing.Add("特训敌人未读出");
+        if (UnmatchedEntries.Count > 0) missing.Add("部分资料未收录");
+        RecognitionStatus = BossName.Length == 0 && EnemyTypes.Count == 0
+            ? "未识别到敌人信息，请确认本局信息页面完整可见后重试。"
+            : missing.Count > 0 ? $"部分识别：{string.Join("；", missing)}。"
+            : $"识别完成：{BossName}，{EnemyTypes.Count} 类特训敌人。";
+        IsRecognizing = false;
+        HasRecordedResult = true;
     }
 
     private static string FormatDamageTypes(IReadOnlyList<string>? types)

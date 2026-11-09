@@ -72,7 +72,11 @@ SP_CHAR_REDIRECT = {
     "char_613_acmedc": "Touch(卫戍协议)",
 }
 
-BOND_BAN = {"绝技"}
+# 「绝技」(bondId = suntShip) 是 noSelect / isActiveInDeck=false 的战斗专属盟约，没有任何
+# 棋子归属；早期抓取时被整表排除过。但它会出现在「确认本局信息」界面的附加盟约列表里，
+# 缺了名字，ban 位识别就无法给该图标配上盟约，因此不再排除。
+# 若将来确实需要排除某个盟约，把名字加进 BOND_BAN 即可。
+BOND_BAN: set[str] = set()
 
 # 预备干员/协议特供棋子，不会出现在 ban 选角色界面
 BAN_SCREEN_EXCLUDE_PREFIXES = ("预备干员-",)

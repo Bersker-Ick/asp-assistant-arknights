@@ -107,6 +107,11 @@
       "activateCount": 2
     },
     {
+      "name": "绝技",
+      "bondType": "REGULAR",
+      "activateCount": 2
+    },
+    {
       "name": "聚合",
       "bondType": "REGULAR",
       "activateCount": 2

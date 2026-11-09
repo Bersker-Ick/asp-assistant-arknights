@@ -24,7 +24,7 @@ public class UpdateService
     };
 
     private const string Owner = "bingyunhe";
-    private const string Repo = "ASP_Assistant-Regulation";
+    private const string Repo = "asp-assistant-arknights";
 
     public Version CurrentVersion =>
         Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(0, 0, 0);

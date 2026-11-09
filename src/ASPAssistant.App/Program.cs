@@ -10,10 +10,25 @@ public static class Program
 
     private const uint MB_OK = 0x0;
     private const uint MB_ICONERROR = 0x10;
+    private const uint MB_ICONWARNING = 0x30;
 
     [STAThread]
     public static void Main()
     {
+        // Single instance: every process runs its own 500 ms screen scan loop, so two
+        // copies both detect the ban screen, both scroll the game and both screenshot —
+        // the ban analysis then fires twice and the two recognitions corrupt each other.
+        using var singleInstance = new Mutex(
+            initiallyOwned: true, "ASPAssistant.App.SingleInstance", out bool isFirstInstance);
+        if (!isFirstInstance)
+        {
+            MessageBoxW(
+                nint.Zero,
+                "ASP Assistant 已经在运行。\n\n同时运行两个实例会让 ban 位识别重复触发、互相抢滚动和截图，请先关闭已运行的窗口。",
+                "ASPAssistant 已在运行 —",
+                MB_OK | MB_ICONWARNING);
+            return;
+        }
 
         // .NET 8 WPF requires Windows 10 build 14393 (version 1607) or later.
         // Check BEFORE loading any WPF assembly so a failed load doesn't silently terminate the process.

@@ -7,8 +7,45 @@
     <UserControl.Resources>
         <converters:LocalPathToImageConverter x:Key="LocalPathToImage" />
     </UserControl.Resources>
+    <DockPanel LastChildFill="True">
+        <StackPanel DockPanel.Dock="Top" Margin="8,8,8,4">
+            <Button x:Name="RecognizeEnemyButton" Content="识别本局敌人"
+                    Style="{StaticResource TrackingButton}" HorizontalAlignment="Left"
+                    Padding="10,6" IsEnabled="{Binding CanRecognize}" Click="OnRecognizeEnemy" />
+            <TextBlock x:Name="RecognitionStatusText" Text="{Binding RecognitionStatus}"
+                       Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11"
+                       TextWrapping="Wrap" Margin="0,6,0,2" />
+        </StackPanel>
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,2,0">
         <StackPanel Margin="8,8,8,10">
+
+            <ItemsControl ItemsSource="{Binding UnmatchedEntries}" Margin="0,0,0,6">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" Foreground="{DynamicResource AccentBrush}"
+                                   FontSize="11" TextWrapping="Wrap" Margin="0,0,0,4" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Expander Header="识别文字（可展开核对）" Foreground="{DynamicResource TextSecondaryBrush}"
+                      FontSize="11" Margin="0,0,0,8">
+                <Expander.Style>
+                    <Style TargetType="Expander">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding RawTexts.Count}" Value="0">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Expander.Style>
+                <ItemsControl ItemsSource="{Binding RawTexts}" Margin="4,6,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,0,0,3" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Expander>
 
             <!-- Section: 首领 -->
             <StackPanel Orientation="Horizontal" Margin="0,0,0,6" VerticalAlignment="Center">
@@ -359,4 +396,5 @@
 
         </StackPanel>
     </ScrollViewer>
+    </DockPanel>
 </UserControl>

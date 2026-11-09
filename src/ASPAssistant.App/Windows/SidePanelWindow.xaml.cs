@@ -26,6 +26,7 @@ public partial class SidePanelWindow : Window
     public LineupViewModel LineupVm { get; }
 
     public event Action? ManualScanRequested;
+    public event Action? EnemyRecognitionRequested;
     public event Action<string, bool>? BanToggleRequested;
 
     private readonly LineupShareService _lineupShareService;
@@ -45,6 +46,7 @@ public partial class SidePanelWindow : Window
     private bool _isProgrammaticChange;   // 程序正在设置位置/尺寸，抑制事件响应
     private bool _isRestoring;            // 正在从最小化恢复，抑制事件响应
     private WindowState _previousWindowState;
+    private WindowState? _stateBeforeGameMinimized;
     // WPF 初始 Show() 会触发 SizeChanged/LocationChanged，在首次 UpdatePosition 前清除误设的标志
     private bool _layoutInitialized;
 
@@ -106,6 +108,7 @@ public partial class SidePanelWindow : Window
         TrackingView.SetOperators(allOperators);
         TrackingView.DataContext = trackingVm;
         EnemyView.DataContext = enemyVm;
+        EnemyView.RecognitionRequested += () => EnemyRecognitionRequested?.Invoke();
         LineupView.DataContext = lineupVm;
         WireLineupView();
 
@@ -291,6 +294,30 @@ public partial class SidePanelWindow : Window
         UpdateBanner.Visibility = Visibility.Collapsed;
     }
 
+    public void SetGameMinimized(bool minimized)
+    {
+        WindowState target;
+        if (minimized)
+        {
+            if (WindowState == WindowState.Minimized)
+                return;
+            _stateBeforeGameMinimized = WindowState;
+            target = WindowState.Minimized;
+        }
+        else
+        {
+            if (_stateBeforeGameMinimized is not { } previous)
+                return;
+            _stateBeforeGameMinimized = null;
+            if (WindowState != WindowState.Minimized)
+                return;
+            target = previous;
+        }
+        _isProgrammaticChange = true;
+        try { WindowState = target; }
+        finally { _isProgrammaticChange = false; }
+    }
+
     public void UpdatePosition(RECT gameRect, bool attachInside, bool isFullscreen, bool gameActuallyMoved)
     {
         _isProgrammaticChange = true;
@@ -370,6 +397,8 @@ public partial class SidePanelWindow : Window
 
     private void OnStateChanged(object? sender, EventArgs e)
     {
+        if (WindowState != WindowState.Minimized)
+            _stateBeforeGameMinimized = null;
         if (_previousWindowState != WindowState.Normal && WindowState == WindowState.Normal)
         {
             _isRestoring = true;

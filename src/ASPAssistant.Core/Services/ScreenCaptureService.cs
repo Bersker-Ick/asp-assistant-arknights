@@ -1,3 +1,4 @@
+﻿// Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md.
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -38,6 +39,10 @@ public class ScreenCaptureService
             return null;
         }
 
+        // CopyFromScreen cannot see through another application's foreground window.
+        if (User32.GetForegroundWindow() != hwnd)
+            return null;
+
         var screenRect = User32.GetClientRectScreen(hwnd);
         if (screenRect == null)
         {
@@ -61,6 +66,13 @@ public class ScreenCaptureService
             using (var g = Graphics.FromImage(raw))
                 g.CopyFromScreen(rect.Left, rect.Top, 0, 0,
                     new System.Drawing.Size(captureWidth, captureHeight));
+
+            // Reject a frame captured while the user switched apps or resized the game.
+            var after = User32.GetClientRectScreen(hwnd);
+            if (User32.GetForegroundWindow() != hwnd || after is null
+                || after.Value.Left != rect.Left || after.Value.Top != rect.Top
+                || after.Value.Width != rect.Width || after.Value.Height != rect.Height)
+                return null;
 
             // Downscale if the window is wider than MaxCaptureWidth. This reduces PNG
             // encode cost here and all MAA decode/processing costs in callers.

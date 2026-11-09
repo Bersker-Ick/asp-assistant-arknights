@@ -121,6 +121,7 @@ public partial class OperatorBrowseView : UserControl
 
     public void UpdateManualScanStatus(int pending)
     {
+        ManualScanButton.IsEnabled = pending == 0;
         ManualScanStatusText.Text = $"{pending} 录入任务执行中";
         ManualScanStatusText.Visibility = pending > 0 ? Visibility.Visible : Visibility.Collapsed;
     }

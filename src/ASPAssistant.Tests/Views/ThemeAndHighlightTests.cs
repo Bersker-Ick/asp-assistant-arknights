@@ -118,11 +118,22 @@ public class ThemeAndHighlightTests
                 trackingVm.AddTracking("烈夏", TrackingType.Operator);
                 trackingVm.AddTracking("塔露拉", TrackingType.Operator);
                 trackingVm.AddTracking("乌萨斯呼吸器", TrackingType.Equipment);
+                var enemyVm = new EnemyViewModel();
                 var sidePanel = new SidePanelWindow(vm, equipmentVm, trackingVm,
-                    new GameStateViewModel(), new BanViewModel(), new EnemyViewModel(),
+                    new GameStateViewModel(), new BanViewModel(), enemyVm,
                     lineupVm, new LineupShareService(), operators, equipment, new SettingsManager(output));
                 try
                 {
+                    sidePanel.SetGameMinimized(true);
+                    sidePanel.WindowState.Should().Be(WindowState.Minimized);
+                    sidePanel.SetGameMinimized(false);
+                    sidePanel.WindowState.Should().Be(WindowState.Normal);
+                    sidePanel.WindowState = WindowState.Minimized;
+                    sidePanel.SetGameMinimized(true);
+                    sidePanel.SetGameMinimized(false);
+                    sidePanel.WindowState.Should().Be(WindowState.Minimized,
+                        "a manually minimized assistant must stay minimized when the game restores");
+                    sidePanel.WindowState = WindowState.Normal;
                     var content = (Border)sidePanel.Content;
                     var tabs = Descendants<TabControl>(content).Single();
                     ((Button)sidePanel.FindName("ThemeToggleButton")).Content.Should().Be("☀");
@@ -140,6 +151,26 @@ public class ThemeAndHighlightTests
                             page.ActualWidth.Should().BeGreaterThan(290);
                             ((SolidColorBrush)page.Background).Color.Should().Be(isLight
                                 ? Color.FromRgb(247, 249, 252) : Color.FromRgb(26, 26, 46));
+                            if (page is EnemyView enemyView)
+                            {
+                                var button = (Button)enemyView.FindName("RecognizeEnemyButton");
+                                enemyVm.BeginRecognition();
+                                content.UpdateLayout();
+                                button.IsEnabled.Should().BeFalse();
+                                ((TextBlock)enemyView.FindName("RecognitionStatusText")).Text.Should().StartWith("正在");
+                                enemyVm.Update(new("假想敌：鳍", ["特训敌人·元素", "特训敌人·致命"],
+                                    ["假想敌：鳍", "特训敌人·元素", "特训敌人·致命"]),
+                                    null, [new() { TypeName = "元素" }, null]);
+                                content.UpdateLayout();
+                                button.IsEnabled.Should().BeTrue();
+                                Descendants<TextBlock>(enemyView).Should().Contain(t => t.Text.Contains("致命：资料未收录"));
+                                int requested = 0;
+                                Action onRequest = () => requested++;
+                                sidePanel.EnemyRecognitionRequested += onRequest;
+                                button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                                requested.Should().Be(1);
+                                sidePanel.EnemyRecognitionRequested -= onRequest;
+                            }
                             if (page is EquipmentBrowseView equipmentView)
                             {
                                 ((System.Windows.Controls.Primitives.ToggleButton)equipmentView.FindName("FilterToggle")).IsChecked = true;

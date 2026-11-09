@@ -1,3 +1,4 @@
+﻿// Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md.
 using System.Timers;
 using ASPAssistant.Core.Interop;
 using Timer = System.Timers.Timer;
@@ -8,11 +9,13 @@ public class WindowTrackerService : IDisposable
 {
     private IntPtr _gameWindowHandle;
     private readonly Timer _pollTimer;
+    private int _polling;
 
     public event Action<RECT>? GameWindowMoved;
     public event Action? GameWindowLost;
     public event Action<bool>? GameWindowFocusChanged;
     public event Action<RECT>? GameWindowPolled;
+    public event Action<bool>? GameWindowMinimizedChanged;
 
     public RECT? CurrentGameRect { get; private set; }
     public bool IsGameFocused { get; private set; }
@@ -20,6 +23,7 @@ public class WindowTrackerService : IDisposable
                                 && User32.IsWindow(_gameWindowHandle);
     public bool ShouldAttachInside { get; private set; }
     public bool IsFullscreen { get; private set; }
+    public bool IsGameMinimized { get; private set; }
 
     public WindowTrackerService(int pollIntervalMs = 100)
     {
@@ -40,51 +44,84 @@ public class WindowTrackerService : IDisposable
 
     private void OnPollTick(object? sender, ElapsedEventArgs e)
     {
-        if (!IsGameFound)
+        if (Interlocked.CompareExchange(ref _polling, 1, 0) != 0)
+            return;
+        try
         {
-            _gameWindowHandle = User32.FindArknightsWindow();
-            if (_gameWindowHandle == IntPtr.Zero)
+            if (!IsGameFound)
             {
-                if (CurrentGameRect != null)
+                _gameWindowHandle = User32.FindArknightsWindow();
+                if (_gameWindowHandle == IntPtr.Zero)
                 {
-                    CurrentGameRect = null;
-                    GameWindowLost?.Invoke();
+                    if (CurrentGameRect != null)
+                    {
+                        CurrentGameRect = null;
+                        GameWindowLost?.Invoke();
+                    }
+                    return;
+                }
+            }
+
+            bool minimized = User32.IsIconic(_gameWindowHandle);
+            bool restored = IsGameMinimized && !minimized;
+            if (minimized && !IsGameMinimized)
+            {
+                IsGameMinimized = true;
+                GameWindowMinimizedChanged?.Invoke(true);
+            }
+            if (minimized)
+            {
+                if (IsGameFocused)
+                {
+                    IsGameFocused = false;
+                    GameWindowFocusChanged?.Invoke(false);
                 }
                 return;
             }
+            if (restored)
+                CurrentGameRect = null;
+
+            var foreground = User32.GetForegroundWindow();
+            var wasFocused = IsGameFocused;
+            IsGameFocused = foreground == _gameWindowHandle;
+            if (wasFocused != IsGameFocused)
+                GameWindowFocusChanged?.Invoke(IsGameFocused);
+
+            if (!User32.GetWindowRect(_gameWindowHandle, out var windowRect))
+            {
+                CurrentGameRect = null;
+                GameWindowLost?.Invoke();
+                _gameWindowHandle = IntPtr.Zero;
+                return;
+            }
+            IsGameMinimized = false;
+
+            // Use the monitor that contains the game window's right edge so that
+            // multi-monitor setups resolve correctly regardless of primary screen.
+            var monitorRect = User32.GetMonitorRect(windowRect.Right - 1, windowRect.Top);
+            var rightSpace = monitorRect.Right - windowRect.Right;
+            var isFullscreen = CheckIsFullscreen(windowRect, monitorRect);
+            var shouldAttachInside = rightSpace < 320 || isFullscreen;
+
+            var changed = IsGameWindowChanged(CurrentGameRect, ShouldAttachInside, IsFullscreen,
+                windowRect, shouldAttachInside, isFullscreen);
+            ShouldAttachInside = shouldAttachInside;
+            IsFullscreen = isFullscreen;
+            CurrentGameRect = windowRect;
+
+            if (changed)
+                GameWindowMoved?.Invoke(windowRect);
+            else
+                GameWindowPolled?.Invoke(windowRect);
+
+            // Restore only after both windows have received valid coordinates.
+            if (restored)
+                GameWindowMinimizedChanged?.Invoke(false);
         }
-
-        var foreground = User32.GetForegroundWindow();
-        var wasFocused = IsGameFocused;
-        IsGameFocused = foreground == _gameWindowHandle;
-        if (wasFocused != IsGameFocused)
-            GameWindowFocusChanged?.Invoke(IsGameFocused);
-
-        if (!User32.GetWindowRect(_gameWindowHandle, out var windowRect))
+        finally
         {
-            CurrentGameRect = null;
-            GameWindowLost?.Invoke();
-            _gameWindowHandle = IntPtr.Zero;
-            return;
+            Interlocked.Exchange(ref _polling, 0);
         }
-
-        // Use the monitor that contains the game window's right edge so that
-        // multi-monitor setups resolve correctly regardless of primary screen.
-        var monitorRect = User32.GetMonitorRect(windowRect.Right - 1, windowRect.Top);
-        var rightSpace = monitorRect.Right - windowRect.Right;
-        var isFullscreen = CheckIsFullscreen(windowRect, monitorRect);
-        var shouldAttachInside = rightSpace < 320 || isFullscreen;
-
-        var changed = IsGameWindowChanged(CurrentGameRect, ShouldAttachInside, IsFullscreen,
-            windowRect, shouldAttachInside, isFullscreen);
-        ShouldAttachInside = shouldAttachInside;
-        IsFullscreen = isFullscreen;
-        CurrentGameRect = windowRect;
-
-        if (changed)
-            GameWindowMoved?.Invoke(windowRect);
-        else
-            GameWindowPolled?.Invoke(windowRect);
     }
 
     private static bool CheckIsFullscreen(RECT rect, RECT monitorRect)

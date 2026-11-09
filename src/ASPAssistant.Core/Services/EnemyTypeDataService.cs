@@ -1,3 +1,4 @@
+﻿// Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md.
 using System.Text.Json;
 using ASPAssistant.Core.Models;
 
@@ -63,93 +64,9 @@ public sealed class EnemyTypeDataService
     {
         if (_byTypeName is null) return null;
 
-        // 1) Exact match first.
-        if (_byTypeName.TryGetValue(typeName, out var entry))
-            return entry;
-
-        // 2) Normalized exact match (strip punctuation/noise).
-        var normalized = NormalizeTypeName(typeName);
-        if (normalized.Length == 0)
-            return null;
-        if (_byTypeName.TryGetValue(normalized, out entry))
-            return entry;
-
-        // 3) Near match with <=1 different character.
-        string? bestName = null;
-        int bestDiff = int.MaxValue;
-        foreach (var key in _byTypeName.Keys)
-        {
-            var nk = NormalizeTypeName(key);
-            int diff = CharDiffDistance(normalized, nk);
-            if (diff < 0 || diff > 1)
-                continue;
-            if (diff < bestDiff)
-            {
-                bestDiff = diff;
-                bestName = key;
-                if (bestDiff == 0) break;
-            }
-        }
-
-        if (bestName != null && _byTypeName.TryGetValue(bestName, out entry))
-            return entry;
-
-        return null;
-    }
-
-    private static string NormalizeTypeName(string raw)
-    {
-        if (string.IsNullOrWhiteSpace(raw))
-            return "";
-
-        var trimmed = raw.Trim().Trim('·', '：', ':', '，', ',', '。', '、', '?', '？', '!', '！', '“', '”', '"', '\'', ' ');
-        var chars = trimmed.Where(c => c >= '\u4e00' && c <= '\u9fff').ToArray();
-        return chars.Length > 0 ? new string(chars) : trimmed;
-    }
-
-    // Returns -1 when lengths differ too much; otherwise differing char count.
-    private static int CharDiffDistance(string a, string b)
-    {
-        if (a.Length == 0 || b.Length == 0)
-            return -1;
-
-        if (a.Length == b.Length)
-        {
-            int diff = 0;
-            for (int i = 0; i < a.Length; i++)
-            {
-                if (a[i] != b[i])
-                    diff++;
-            }
-            return diff;
-        }
-
-        // One insertion/deletion tolerance.
-        if (Math.Abs(a.Length - b.Length) > 1)
-            return -1;
-
-        var longer = a.Length >= b.Length ? a : b;
-        var shorter = a.Length >= b.Length ? b : a;
-        int iLong = 0, iShort = 0, diffCount = 0;
-        while (iLong < longer.Length && iShort < shorter.Length)
-        {
-            if (longer[iLong] == shorter[iShort])
-            {
-                iLong++;
-                iShort++;
-            }
-            else
-            {
-                diffCount++;
-                iLong++;
-                if (diffCount > 1)
-                    return diffCount;
-            }
-        }
-
-        if (iLong < longer.Length)
-            diffCount++;
-        return diffCount;
+        var normalized = new string(typeName.Where(c => c is >= '\u4e00' and <= '\u9fff').ToArray());
+        _byTypeName.TryGetValue(normalized, out var entry);
+        return entry;
     }
 
     // ── JSON wrapper ──────────────────────────────────────────────────────────

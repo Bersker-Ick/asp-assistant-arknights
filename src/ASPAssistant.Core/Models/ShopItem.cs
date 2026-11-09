@@ -1,3 +1,4 @@
+﻿// Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md.
 namespace ASPAssistant.Core.Models;
 
 public class ShopItem
@@ -6,13 +7,13 @@ public class ShopItem
 
     /// <summary>
     /// Unique key for this card instance, used to identify it across the
-    /// stabilizer and overlay pool.  Defaults to <see cref="Name"/> for
-    /// backwards-compatible code paths; set to <c>"Name@CardX"</c> by the
-    /// scanner to distinguish multiple cards with the same operator name.
+    /// stabilizer and overlay pool. The reader uses Name@occurrence, left to right,
+    /// so duplicate names remain separate and OCR pixel jitter does not change IDs.
     /// </summary>
     public string Id { get; set; } = "";
 
     public int Price { get; set; }
     public bool IsTracked { get; set; }
+    /// <summary>Detected name bounds, normalized to the full captured client image.</summary>
     public (double X, double Y, double Width, double Height) OcrRegion { get; set; }
 }

@@ -51,9 +51,11 @@ public class RegulationDataTests
     {
         var (covenants, equipmentMappings) = await _store.LoadCovenantsAsync();
 
-        covenants.Should().HaveCount(25);
+        covenants.Should().HaveCount(26);
         covenants.Single(c => c.Name == "聚合").ActivateCount.Should().Be(2);
         covenants.Single(c => c.Name == "莱塔尼亚").BondType.Should().Be("SEASON");
+        // 绝技 (bondId suntShip) has no operator but is listed on the ban screen.
+        covenants.Single(c => c.Name == "绝技").BondType.Should().Be("REGULAR");
         equipmentMappings["电流维式重锤"].Should().Be("维多利亚");
         equipmentMappings["终极维式重锤"].Should().Be("维多利亚");
         equipmentMappings["炎国短刀"].Should().Be("炎");
