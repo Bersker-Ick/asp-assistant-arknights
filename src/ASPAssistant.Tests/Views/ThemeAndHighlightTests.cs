@@ -850,6 +850,42 @@ public class ThemeAndHighlightTests
                                     }
                                 }
                                 Save(content, Path.Combine(output, isLight ? "light-tracking-narrow.png" : "dark-tracking-narrow.png"));
+                                var previousEntries = trackingVm.AllEntries.ToList();
+                                var multipleLineups = trackingVm.TrackMultipleLineups;
+                                try
+                                {
+                                    trackingVm.TrackMultipleLineups = false;
+                                    var target = covenants.First(c => c.BondType == "SEASON"
+                                        && !operators.Single(o => o.Name == "烈夏").CoreCovenants.Contains(c.Name)).Name;
+                                    var plannedLineup = new Lineup { Slots =
+                                    [
+                                        new() { OperatorName = "烈夏", TransformedCovenant = target },
+                                        new() { OperatorName = "魔王" }
+                                    ] };
+                                    trackingVm.TrackLineup(plannedLineup);
+                                    content.UpdateLayout();
+                                    var chips = (ItemsControl)trackingView.FindName("TrackedCovenantChips");
+                                    chips.Items.Cast<TrackedCovenantChip>().ToDictionary(c => c.Name, c => c.Count)
+                                        .Should().BeEquivalentTo(lineupVm.Calculator.Compute(plannedLineup)
+                                            .Where(s => s.Count > 0).ToDictionary(s => s.Name, s => s.Count));
+                                    var cancelTransform = Descendants<Button>(trackingView)
+                                        .Single(b => b.DataContext is TrackingEntry { Name: "烈夏" } && b.Content as string == target);
+                                    cancelTransform.Visibility.Should().Be(Visibility.Visible);
+                                    Descendants<TextBlock>(cancelTransform).Should().Contain(t => t.Text.Contains($"转职：{target}"));
+                                    (cancelTransform.TranslatePoint(new Point(), trackingView).X + cancelTransform.ActualWidth)
+                                        .Should().BeLessThanOrEqualTo(trackingView.ActualWidth);
+                                    Save(content, Path.Combine(output, isLight ? "light-tracking-transform.png" : "dark-tracking-transform.png"));
+                                    cancelTransform.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                                    content.UpdateLayout();
+                                    trackingVm.TrackedOperators.Single(e => e.Name == "烈夏").TransformedCovenant.Should().BeEmpty();
+                                    chips.Items.Cast<TrackedCovenantChip>().Should().NotContain(c => c.Name == target);
+                                    plannedLineup.Slots[0].TransformedCovenant.Should().Be(target);
+                                }
+                                finally
+                                {
+                                    trackingVm.LoadEntries(previousEntries);
+                                    trackingVm.TrackMultipleLineups = multipleLineups;
+                                }
                                 sidePanel.Width = 310;
                                 content.Measure(new Size(310, 900));
                                 content.Arrange(new Rect(0, 0, 310, 900));
@@ -989,6 +1025,21 @@ public class ThemeAndHighlightTests
                             Descendants<Button>((Border)slots.Items[0]).Single().Content.Should().Be("+ 选择干员");
                             ((Button)phaseTabs.Children[4]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                             Descendants<TextBlock>((Border)slots.Items[0]).Should().Contain(t => t.Text == "众志合一");
+                            editorVm.SelectPhase(LineupPhase.后期);
+                            editorVm.SetSlotOperator(0, "烈夏");
+                            editorVm.Slots[0].TransformedCovenant = "炎";
+                            editorVm.Recalculate();
+                            ((Button)phaseTabs.Children[2]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                            editorContent.UpdateLayout();
+                            var transformedCard = (Border)slots.Items[0];
+                            var cancelTransform = Descendants<Button>(transformedCard)
+                                .Single(b => b.Content as string == "转职：炎 ✕");
+                            (cancelTransform.TranslatePoint(new Point(), transformedCard).X + cancelTransform.ActualWidth)
+                                .Should().BeLessThanOrEqualTo(transformedCard.ActualWidth);
+                            Save(editorContent, Path.Combine(output, isLight ? "light-editor-transform.png" : "dark-editor-transform.png"));
+                            cancelTransform.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                            editorVm.ToLineup().Slots.Single().TransformedCovenant.Should().BeEmpty();
+                            editorVm.ActiveStats.Should().NotContain(s => s.Name == "炎");
                         }
                         finally { editor.Close(); }
 

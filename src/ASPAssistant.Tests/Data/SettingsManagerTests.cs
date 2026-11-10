@@ -28,7 +28,7 @@ public class SettingsManagerTests : IDisposable
     {
         var entries = new List<TrackingEntry>
         {
-            new() { Name = "角峰", Type = TrackingType.Operator },
+            new() { Name = "角峰", Type = TrackingType.Operator, TransformedCovenant = "炎" },
             new() { Name = "不屈弹射器", Type = TrackingType.Equipment }
         };
 
@@ -38,6 +38,14 @@ public class SettingsManagerTests : IDisposable
         loaded.Should().HaveCount(2);
         loaded.Should().Contain(e => e.Name == "角峰" && e.Type == TrackingType.Operator);
         loaded.Should().Contain(e => e.Name == "不屈弹射器" && e.Type == TrackingType.Equipment);
+        loaded.Single(e => e.Name == "角峰").TransformedCovenant.Should().Be("炎");
+    }
+
+    [Fact]
+    public async Task OldTrackingEntriesDefaultToNoPlannedTransformation()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_tempDir, "tracking.json"), """[{"name":"角峰","type":0}]""");
+        (await _manager.LoadTrackingEntriesAsync()).Should().ContainSingle().Which.TransformedCovenant.Should().BeEmpty();
     }
 
     [Fact]

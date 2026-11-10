@@ -147,7 +147,7 @@ public sealed class LineupPlanner
             _request = request; _ops = ops; _allowedOrdered = allowed; _allowed = [.. allowed];
             _locked = locked; _lockedSet = [.. locked]; _maxResults = maxResults; _maxNodes = maxNodes; _ct = ct;
             _native = ops.Select(o => o.CoreCovenants.Concat(o.AdditionalCovenants).ToHashSet(StringComparer.Ordinal)).ToArray();
-            _harmony = ops.Select(o => o.CoreCovenants.Contains(CovenantCalculator.HarmonyCovenant)).ToArray();
+            _harmony = _native.Select(c => c.Contains(CovenantCalculator.HarmonyCovenant)).ToArray();
             _used = new bool[ops.Count];
             _rarity = request.Goals.ToDictionary(g => g.Name, g => _native.Count(n => n.Contains(g.Name)));
             _goalNames = request.Goals.Select(g => g.Name).ToHashSet(StringComparer.Ordinal);
@@ -182,7 +182,7 @@ public sealed class LineupPlanner
                     present.Add(c);
                 }
                 foreach (var c in op.AdditionalCovenants)
-                    if (counts.ContainsKey(c)) counts[c]++;
+                    if (c != CovenantCalculator.HarmonyCovenant && counts.ContainsKey(c)) counts[c]++;
                 if (_harmony[i])
                 {
                     harmony++;
@@ -258,7 +258,8 @@ public sealed class LineupPlanner
             var expanded = 0;
             foreach (var b in branches.OrderByDescending(b => b.Score).ThenBy(b => b.Index))
             {
-                if (Done || expanded++ >= MaxBranches) break;
+                if (Done) break;
+                if (expanded++ >= MaxBranches) { _limited = true; break; }
                 _picked.Add(b.Index); _used[b.Index] = true;
                 Visit();
                 _picked.RemoveAt(_picked.Count - 1); _used[b.Index] = false;

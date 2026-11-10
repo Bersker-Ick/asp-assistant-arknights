@@ -157,6 +157,7 @@ public partial class SidePanelWindow : Window
         EquipmentView.DataContext = equipmentVm;
         TrackingView.SetOperators(allOperators);
         TrackingView.SetEquipment(allEquipment);
+        TrackingView.SetCovenantCalculator(lineupVm.Calculator);
         TrackingView.DataContext = trackingVm;
         EnemyView.DataContext = enemyVm;
         EnemyView.RecognitionRequested += () => EnemyRecognitionRequested?.Invoke();

@@ -247,6 +247,24 @@ public partial class LineupEditorWindow : Window
         headerDock.Children.Add(rightStack);
         stack.Children.Add(headerDock);
 
+        if (slot.TransformedCovenant.Length > 0)
+        {
+            var transform = new Button
+            {
+                Content = $"转职：{slot.TransformedCovenant} ✕",
+                Style = (Style)FindResource("ChipButton"), Tag = "active",
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = new Thickness(0, 6, 0, 0), ToolTip = "取消计划转职",
+            };
+            transform.Click += (_, _) =>
+            {
+                _vm.ClearSlotTransformation(slotIndex);
+                RefreshSlotCard(border, slotIndex);
+                RefreshCovenantPanel();
+            };
+            stack.Children.Add(transform);
+        }
+
         // Tags
         var tagsLabel = new TextBlock
         {

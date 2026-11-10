@@ -115,6 +115,14 @@ public partial class LineupEditorViewModel : ObservableObject
         Recalculate();
     }
 
+    public void ClearSlotTransformation(int slotIndex)
+    {
+        var slot = CloneSlot(Slots[slotIndex]);
+        slot.TransformedCovenant = "";
+        Slots[slotIndex] = slot;
+        Recalculate();
+    }
+
     /// <summary>切换装备：若已装备则移除；若未装备则在不超过上限时追加。</summary>
     public void ToggleSlotEquipment(int slotIndex, string equipName)
     {
