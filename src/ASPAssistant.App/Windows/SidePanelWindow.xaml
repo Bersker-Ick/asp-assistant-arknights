@@ -170,6 +170,9 @@
                     <TabItem Header="阵容">
                         <views:LineupListView x:Name="LineupView" />
                     </TabItem>
+                    <TabItem Header="规划">
+                        <views:LineupPlannerView x:Name="PlannerView" />
+                    </TabItem>
                     <TabItem Header="敌人">
                         <views:EnemyView x:Name="EnemyView" />
                     </TabItem>

@@ -152,6 +152,7 @@ public partial class LineupEditorViewModel : ObservableObject
     private static LineupSlot CloneSlot(LineupSlot s) => new()
     {
         OperatorName = s.OperatorName,
+        TransformedCovenant = s.TransformedCovenant,
         Equipments   = [.. s.Equipments],
         Tags         = [.. s.Tags],
     };

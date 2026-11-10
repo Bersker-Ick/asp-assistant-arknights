@@ -31,15 +31,44 @@
         </CollectionViewSource>
     </UserControl.Resources>
     <DockPanel>
-        <!-- Search box -->
-        <Border DockPanel.Dock="Top" Margin="8,8,8,4"
-                Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="1" CornerRadius="6">
-            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                     Background="Transparent" Foreground="{DynamicResource TextPrimaryBrush}"
-                     BorderThickness="0" Padding="8,5"
-                     CaretBrush="{DynamicResource AccentBrush}" />
-        </Border>
+        <!-- Search row: search box + 截屏录入 -->
+        <StackPanel DockPanel.Dock="Top" Margin="8,8,8,6">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" x:Name="ManualScanButton" Content="截屏录入" Tag="accent" Height="30"
+                        Margin="6,0,0,0" Padding="11,0" Style="{StaticResource SmallActionButton}"
+                        ToolTip="打开游戏内的本局信息页后点击，录入 Ban 位、盟约和敌人"
+                        Click="OnManualScanClicked" />
+                <Border Height="30" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="15" Padding="10,0">
+                    <DockPanel>
+                        <Path DockPanel.Dock="Left" Width="12" Height="12" Margin="0,0,7,0" Stretch="Uniform" VerticalAlignment="Center"
+                              Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.6"
+                              Data="M7,1 A6,6 0 1 1 6.99,1 Z M11.5,11.5 L16,16" />
+                        <Grid>
+                            <TextBlock Text="搜索干员名称" FontSize="12" VerticalAlignment="Center" IsHitTestVisible="False"
+                                       Foreground="{DynamicResource TextSecondaryBrush}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     Background="Transparent" Foreground="{DynamicResource TextPrimaryBrush}"
+                                     BorderThickness="0" Padding="0" FontSize="12" VerticalContentAlignment="Center"
+                                     CaretBrush="{DynamicResource AccentBrush}" />
+                        </Grid>
+                    </DockPanel>
+                </Border>
+            </DockPanel>
+            <TextBlock x:Name="ManualScanStatusText" FontSize="11" Margin="4,4,0,0"
+                       Foreground="{DynamicResource TextSecondaryBrush}" Visibility="Collapsed" />
+        </StackPanel>
 
         <!-- Filter panel: two-row Grid — header row (toggle + tags) above content row (lists).
              No overlay: tags fill the DockPanel remainder, toggle is always protected on the left. -->
@@ -116,156 +145,17 @@
                     </Style>
                 </StackPanel.Style>
 
-                <!-- Availability filter (ban status) — always at top -->
-                <DockPanel Margin="0,0,0,4">
-                    <TextBlock DockPanel.Dock="Left" Text="本局状态"
-                               VerticalAlignment="Center"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               FontSize="10" FontWeight="SemiBold" Margin="0,0,4,0" />
-                    <Button DockPanel.Dock="Right" x:Name="ClearHighlightsButton"
-                            Content="清除高亮" FontSize="10" Padding="4,1" Margin="3,0,0,0"
-                            Background="{DynamicResource AvailableTintBrush}"
-                            Foreground="{DynamicResource AvailableBrush}"
-                            BorderBrush="{DynamicResource AvailableBrush}" BorderThickness="1"
-                            Click="OnClearHighlightsClicked">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource ClickableButtonBase}">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border x:Name="highlightButton" CornerRadius="4"
-                                                    Background="{TemplateBinding Background}"
-                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                                    Padding="{TemplateBinding Padding}">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="highlightButton" Property="Opacity" Value="0.85" />
-                                                </Trigger>
-                                                <Trigger Property="IsPressed" Value="True">
-                                                    <Setter TargetName="highlightButton" Property="Opacity" Value="0.65" />
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    <Button DockPanel.Dock="Right" x:Name="ClearBansButton"
-                            Content="清除ban位" FontSize="10"
-                            Padding="4,1" Margin="3,0,0,0"
-                            HorizontalAlignment="Right"
-                            Click="OnClearBansClicked">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource ClickableButtonBase}">
-                                <Setter Property="Background" Value="{DynamicResource DangerTintBrush}" />
-                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
-                                <Setter Property="BorderBrush" Value="{DynamicResource DangerBorderBrush}" />
-                                <Setter Property="BorderThickness" Value="1" />
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                                    CornerRadius="4"
-                                                    Padding="{TemplateBinding Padding}">
-                                                <ContentPresenter HorizontalAlignment="Center"
-                                                                  VerticalAlignment="Center" />
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="{DynamicResource DangerBorderBrush}" />
-                                                </Trigger>
-                                                <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Background" Value="{DynamicResource DangerPressedBrush}" />
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    <Button DockPanel.Dock="Right" x:Name="ResetFiltersButton"
-                            Content="重置" FontSize="11"
-                            Padding="4,1" Margin="3,0,0,0"
-                            HorizontalAlignment="Right"
-                            ToolTip="把所有筛选恢复为默认状态"
-                            Click="OnResetFiltersClicked">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource ClickableButtonBase}">
-                                <Setter Property="Background" Value="{DynamicResource NeutralTintBrush}" />
-                                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-                                <Setter Property="BorderBrush" Value="{DynamicResource SoftBorderBrush}" />
-                                <Setter Property="BorderThickness" Value="1" />
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                                    CornerRadius="4"
-                                                    Padding="{TemplateBinding Padding}">
-                                                <ContentPresenter HorizontalAlignment="Center"
-                                                                  VerticalAlignment="Center" />
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="{DynamicResource NeutralHoverBrush}" />
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    <Button DockPanel.Dock="Right" x:Name="ManualScanButton"
-                            Content="截屏录入" FontSize="10"
-                            Padding="4,1" Margin="3,0,0,0"
-                            HorizontalAlignment="Right"
-                            Click="OnManualScanClicked">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource ClickableButtonBase}">
-                                <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}" />
-                                <Setter Property="Foreground" Value="#FF4FC3F7" />
-                                <Setter Property="BorderBrush" Value="{DynamicResource AccentBorderBrush}" />
-                                <Setter Property="BorderThickness" Value="1" />
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                                    CornerRadius="4"
-                                                    Padding="{TemplateBinding Padding}">
-                                                <ContentPresenter HorizontalAlignment="Center"
-                                                                  VerticalAlignment="Center" />
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="{DynamicResource AccentBorderBrush}" />
-                                                </Trigger>
-                                                <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Background" Value="{DynamicResource AccentPressedBrush}" />
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    <TextBlock x:Name="ManualScanStatusText"
-                               DockPanel.Dock="Right"
-                               FontSize="11" VerticalAlignment="Center"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               Margin="4,0,0,0"
-                               Visibility="Collapsed" />
+                <!-- Availability filter (ban status) + run actions -->
+                <DockPanel Margin="0,0,0,6">
+                    <WrapPanel DockPanel.Dock="Right" Margin="6,0,0,0">
+                        <Button x:Name="ResetFiltersButton" Content="重置筛选" Style="{StaticResource SmallActionButton}"
+                                Margin="4,0,0,0" ToolTip="把所有筛选恢复为默认状态" Click="OnResetFiltersClicked" />
+                        <Button x:Name="ClearHighlightsButton" Content="清除高亮" Tag="available" Style="{StaticResource SmallActionButton}"
+                                Margin="4,0,0,0" ToolTip="清除本局可用盟约的高亮" Click="OnClearHighlightsClicked" />
+                        <Button x:Name="ClearBansButton" Content="清除 Ban 位" Tag="danger" Style="{StaticResource SmallActionButton}"
+                                Margin="4,0,0,0" ToolTip="清除本局录入的禁用干员" Click="OnClearBansClicked" />
+                    </WrapPanel>
+                    <ContentControl Style="{StaticResource FilterGroupHeader}" Margin="0" Content="本局状态" VerticalAlignment="Center" />
                 </DockPanel>
                 <ListBox x:Name="AvailabilityFilterList"
                          Style="{StaticResource FilterChipListBox}"
@@ -394,12 +284,17 @@
                     <GroupStyle>
                         <GroupStyle.HeaderTemplate>
                             <DataTemplate>
-                                <Border Background="{DynamicResource SectionBackgroundBrush}" CornerRadius="3" Padding="6,5" Margin="0,6,0,4">
-                                    <TextBlock HorizontalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"
-                                               FontSize="12" FontWeight="SemiBold">
-                                        <Run Text="{Binding Name, Mode=OneWay, Converter={StaticResource TierToRoman}}" /><Run Text=" 阶" />
-                                    </TextBlock>
-                                </Border>
+                                <DockPanel Margin="2,10,2,6">
+                                    <Border DockPanel.Dock="Left" CornerRadius="4" Padding="7,1" Margin="0,0,6,0"
+                                            Background="{DynamicResource SectionBackgroundBrush}">
+                                        <TextBlock Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12" FontWeight="SemiBold">
+                                            <Run Text="{Binding Name, Mode=OneWay, Converter={StaticResource TierToRoman}}" /><Run Text=" 阶" />
+                                        </TextBlock>
+                                    </Border>
+                                    <TextBlock DockPanel.Dock="Left" Text="{Binding ItemCount}" FontSize="11" Margin="0,0,8,0"
+                                               VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <Rectangle Height="1" VerticalAlignment="Center" Fill="{DynamicResource BorderBrush}" />
+                                </DockPanel>
                             </DataTemplate>
                         </GroupStyle.HeaderTemplate>
                         <GroupStyle.Panel>

@@ -62,7 +62,9 @@ public partial class OperatorCard : UserControl
         DetailsToolTip.IsOpen = false;
         if (DataContext is not Operator op) return;
 
-        CovenantSummary.Text = string.Join(" · ", op.CoreCovenants.Concat(op.AdditionalCovenants));
+        CovenantChips.ItemsSource = op.CoreCovenants.Select(c => new CovenantChipItem(c, true))
+            .Concat(op.AdditionalCovenants.Select(c => new CovenantChipItem(c, false)))
+            .ToList();
 
         // Inherit IsTrackedCheck from parent view if not explicitly set
         if (IsTrackedCheck == null)
@@ -151,3 +153,6 @@ public partial class OperatorCard : UserControl
         Opacity = IsBanned ? 0.65 : 1.0;
     }
 }
+
+/// <summary>One covenant label on an operator row.</summary>
+public sealed record CovenantChipItem(string Name, bool IsCore);

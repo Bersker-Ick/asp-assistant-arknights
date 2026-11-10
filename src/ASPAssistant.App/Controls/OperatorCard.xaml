@@ -7,66 +7,8 @@
     <UserControl.Resources>
         <converters:TierToRomanConverter x:Key="TierToRoman" />
         <converters:LocalPathToImageConverter x:Key="LocalImage" />
-        <DataTemplate x:Key="CovenantChip">
-            <Border Background="{DynamicResource AccentTintBrush}" CornerRadius="4" Padding="5,2" Margin="0,0,4,4">
-                <TextBlock Text="{Binding}" FontSize="11" Foreground="{DynamicResource TextPrimaryBrush}" />
-            </Border>
-        </DataTemplate>
-        <DataTemplate x:Key="VariantDetails">
-            <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="8"
-                    BorderBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ContentControl}}"
-                    BorderThickness="1" Padding="12" Width="228" VerticalAlignment="Top">
-                <StackPanel>
-                    <DockPanel Margin="0,0,0,10">
-                        <Border DockPanel.Dock="Left" Width="56" Height="56" Margin="0,0,10,0"
-                                Background="{DynamicResource NeutralHoverBrush}" CornerRadius="4" ClipToBounds="True">
-                            <Image Stretch="UniformToFill"
-                                   Source="{Binding DataContext.IconPath, RelativeSource={RelativeSource AncestorType=ToolTip}, Converter={StaticResource LocalImage}}" />
-                        </Border>
-                        <StackPanel>
-                            <TextBlock Text="{Binding DataContext.Name, RelativeSource={RelativeSource AncestorType=ToolTip}}"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" FontSize="15"
-                                       FontWeight="SemiBold" TextWrapping="Wrap" />
-                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                <TextBlock Text="{Binding DataContext.Tier, RelativeSource={RelativeSource AncestorType=ToolTip}, Converter={StaticResource TierToRoman}}"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11" Margin="0,0,8,0" />
-                                <TextBlock Text="{Binding Tag, RelativeSource={RelativeSource AncestorType=ContentControl}}"
-                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ContentControl}}"
-                                           FontSize="12" FontWeight="Bold" />
-                            </StackPanel>
-                        </StackPanel>
-                    </DockPanel>
-                    <WrapPanel Margin="0,0,0,6">
-                        <ItemsControl ItemsSource="{Binding DataContext.CoreCovenants, RelativeSource={RelativeSource AncestorType=ToolTip}}"
-                                      ItemTemplate="{StaticResource CovenantChip}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
-                        <ItemsControl ItemsSource="{Binding DataContext.AdditionalCovenants, RelativeSource={RelativeSource AncestorType=ToolTip}}"
-                                      ItemTemplate="{StaticResource CovenantChip}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
-                    </WrapPanel>
-                    <ItemsControl ItemsSource="{Binding Traits}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Margin="0,0,0,6">
-                                    <TextBlock Text="{Binding TraitType}" FontSize="10"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
-                                    <TextBlock Text="{Binding TraitDescription}" FontSize="12" LineHeight="19"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </Border>
-        </DataTemplate>
     </UserControl.Resources>
-    <Border x:Name="CardBorder" BorderThickness="1" CornerRadius="3" Margin="0,0,0,2"
+    <Border x:Name="CardBorder" BorderThickness="1" CornerRadius="6" Margin="0,0,0,4"
             ToolTipService.InitialShowDelay="0"
             ToolTipService.BetweenShowDelay="0"
             ToolTipService.ShowDuration="60000">
@@ -89,19 +31,12 @@
                 <Border Background="{DynamicResource PanelBackgroundBrush}" CornerRadius="10" Padding="6"
                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel Orientation="Horizontal">
-                            <ContentControl Content="{Binding Normal}" Tag="普通"
-                                            Foreground="{DynamicResource AccentBrush}"
-                                            ContentTemplate="{StaticResource VariantDetails}" VerticalAlignment="Top" />
-                            <ContentControl Content="{Binding Elite}" Tag="精锐" Margin="8,0,0,0"
-                                            Foreground="{DynamicResource EliteBrush}"
-                                            ContentTemplate="{StaticResource VariantDetails}" VerticalAlignment="Top" />
-                        </StackPanel>
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource OperatorDetailsTemplate}" />
                     </ScrollViewer>
                 </Border>
             </ToolTip>
         </Border.ToolTip>
-        <Grid Height="38" ClipToBounds="True">
+        <Grid Height="40" ClipToBounds="True">
             <Image x:Name="PortraitBackground" Width="134" HorizontalAlignment="Right" Stretch="UniformToFill" Opacity="0.8"
                    Source="{Binding IconPath, Converter={StaticResource LocalImage}}" />
             <Border IsHitTestVisible="False">
@@ -117,27 +52,49 @@
             <Grid Margin="8,0,5,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="1.15*" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <Border x:Name="TrackingPortrait" Width="28" Height="28" Margin="0,0,7,0"
-                        CornerRadius="4" ClipToBounds="True" VerticalAlignment="Center"
-                        Background="{DynamicResource NeutralHoverBrush}" Visibility="Collapsed">
-                    <Image Source="{Binding IconPath, Converter={StaticResource LocalImage}}" Stretch="UniformToFill" />
-                </Border>
+                <Ellipse x:Name="TrackingPortrait" Width="28" Height="28" Margin="0,0,8,0" VerticalAlignment="Center"
+                         Stroke="{DynamicResource TrackingBrush}" StrokeThickness="1.5" Visibility="Collapsed">
+                    <Ellipse.Fill>
+                        <ImageBrush ImageSource="{Binding IconPath, Converter={StaticResource LocalImage}}" Stretch="UniformToFill" />
+                    </Ellipse.Fill>
+                </Ellipse>
                 <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="{DynamicResource TextPrimaryBrush}"
                            FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
-                           VerticalAlignment="Center" Margin="0,0,6,0" />
-                <Border Grid.Column="2" Background="{DynamicResource SummaryBackgroundBrush}" CornerRadius="3" Padding="3,2"
-                        Margin="0,0,8,0" VerticalAlignment="Center">
-                    <TextBlock x:Name="CovenantSummary" FontSize="10" TextAlignment="Right"
-                               Foreground="{DynamicResource AccentBrush}" TextTrimming="CharacterEllipsis" />
-                </Border>
-                <Border x:Name="BanBadge" Grid.Column="3" Background="#BBDD2222" CornerRadius="3"
-                        Padding="4,1" Margin="0,0,5,0" VerticalAlignment="Center" Visibility="Collapsed">
-                    <TextBlock Text="禁用" FontSize="9" Foreground="White" />
+                           VerticalAlignment="Center" Margin="0,0,6,0" MaxWidth="110" />
+                <!-- Covenant chips: core covenants in accent, additional ones neutral -->
+                <ItemsControl x:Name="CovenantChips" Grid.Column="2" Margin="0,0,6,0" VerticalAlignment="Center"
+                              HorizontalAlignment="Right" ClipToBounds="True" Focusable="False" IsHitTestVisible="False">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border x:Name="chip" CornerRadius="8" Padding="6,1" Margin="3,0,0,0" BorderThickness="1"
+                                    Background="{DynamicResource SummaryBackgroundBrush}" BorderBrush="{DynamicResource SoftBorderBrush}">
+                                <TextBlock x:Name="chipText" Text="{Binding Name}" FontSize="10"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Border>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsCore}" Value="True">
+                                    <Setter TargetName="chip" Property="BorderBrush" Value="{DynamicResource AccentBorderBrush}" />
+                                    <Setter TargetName="chipText" Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                                    <Setter TargetName="chipText" Property="FontWeight" Value="SemiBold" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Border x:Name="BanBadge" Grid.Column="3" Background="{DynamicResource DangerTintBrush}"
+                        BorderBrush="{DynamicResource DangerBrush}" BorderThickness="1" CornerRadius="8"
+                        Padding="5,0" Margin="0,0,5,0" VerticalAlignment="Center" Visibility="Collapsed">
+                    <TextBlock Text="禁用" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource DangerBrush}" />
                 </Border>
                 <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="TrackButton" Width="25" Height="25" Padding="0" FontSize="14"

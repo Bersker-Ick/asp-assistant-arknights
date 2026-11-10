@@ -319,10 +319,11 @@ public class ThemeAndHighlightTests
                                 trackedCards.Should().HaveCount(2);
                                 trackedCards.Should().OnlyContain(c => c.IsTrackingList && c.IsTracked);
                                 var trackedCard = trackedCards.Single(c => ((Operator)c.DataContext).Name == "烈夏");
-                                var portrait = (Border)trackedCard.FindName("TrackingPortrait");
+                                var portrait = (System.Windows.Shapes.Ellipse)trackedCard.FindName("TrackingPortrait");
                                 portrait.Visibility.Should().Be(Visibility.Visible);
-                                ((Image)portrait.Child).Source.Should().NotBeNull();
-                                ((TextBlock)trackedCard.FindName("CovenantSummary")).Text.Should().Contain("乌萨斯");
+                                ((ImageBrush)portrait.Fill).ImageSource.Should().NotBeNull();
+                                ((IEnumerable<CovenantChipItem>)((ItemsControl)trackedCard.FindName("CovenantChips")).ItemsSource)
+                                    .Should().Contain(c => c.Name == "乌萨斯" && c.IsCore);
                                 ((Button)trackedCard.FindName("BanButton")).Visibility.Should().Be(Visibility.Collapsed);
                                 var detail = (ToolTip)trackedCard.FindName("DetailsToolTip");
                                 detail.PlacementTarget = (UIElement)trackedCard.FindName("CardBorder");

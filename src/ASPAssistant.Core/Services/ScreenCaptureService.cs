@@ -40,8 +40,12 @@ public class ScreenCaptureService
         }
 
         // CopyFromScreen cannot see through another application's foreground window.
-        if (User32.GetForegroundWindow() != hwnd)
+        var foreground = User32.GetForegroundWindow();
+        if (foreground != hwnd)
+        {
+            AppLogger.Warn("ScreenCapture", $"Foreground mismatch: game=0x{hwnd.ToInt64():X}, foreground=0x{foreground.ToInt64():X}");
             return null;
+        }
 
         var screenRect = User32.GetClientRectScreen(hwnd);
         if (screenRect == null)
@@ -72,7 +76,10 @@ public class ScreenCaptureService
             if (User32.GetForegroundWindow() != hwnd || after is null
                 || after.Value.Left != rect.Left || after.Value.Top != rect.Top
                 || after.Value.Width != rect.Width || after.Value.Height != rect.Height)
+            {
+                AppLogger.Warn("ScreenCapture", "Capture invalidated because foreground or client rect changed during capture");
                 return null;
+            }
 
             // Downscale if the window is wider than MaxCaptureWidth. This reduces PNG
             // encode cost here and all MAA decode/processing costs in callers.
@@ -94,7 +101,9 @@ public class ScreenCaptureService
             {
                 using var ms = new MemoryStream();
                 output.Save(ms, ImageFormat.Png);
-                return ms.ToArray();
+                var png = ms.ToArray();
+                AppLogger.Info("ScreenCapture", $"Captured {captureWidth}x{captureHeight} ({png.Length} bytes)");
+                return png;
             }
             finally
             {

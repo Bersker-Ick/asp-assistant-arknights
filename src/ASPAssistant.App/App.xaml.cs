@@ -240,7 +240,8 @@ public partial class App : Application
         var sidePanel = _sidePanel = new SidePanelWindow(
             operatorVm, equipmentVm, trackingVm, gameStateVm, banVm, enemyVm,
             lineupVm, lineupShareService,
-            operators, equipment, _settingsManager, gameTheme);
+            operators, equipment, _settingsManager, gameTheme,
+            new LineupPlanner(operators, covenantInfos), covenantInfos);
         sidePanel.GameThemeChanged += theme => shopReader.Theme = theme;
         var overlay = _overlay = new OverlayWindow()
         {
@@ -257,10 +258,14 @@ public partial class App : Application
                 var foreground = Core.Interop.User32.GetForegroundWindow();
                 if (game == IntPtr.Zero || foreground != game
                     && foreground != new System.Windows.Interop.WindowInteropHelper(sidePanel).Handle)
+                {
+                    AppLogger.Warn("ScreenCapture", $"Manual capture rejected: game=0x{game.ToInt64():X}, foreground=0x{foreground.ToInt64():X}, panel=0x{new System.Windows.Interop.WindowInteropHelper(sidePanel).Handle.ToInt64():X}");
                     return (Allowed: false, Panel: false, Overlay: false);
+                }
                 var before = (Allowed: true, Panel: sidePanel.IsVisible, Overlay: overlay.IsVisible);
                 sidePanel.Hide();
                 overlay.Hide();
+                Core.Interop.User32.SetForegroundWindow(game);
                 return before;
             });
             if (!visibility.Allowed) return null;
@@ -444,7 +449,7 @@ public partial class App : Application
             Dispatcher.Invoke(() =>
             {
                 enemyVm.RecognitionFailed(message);
-                sidePanel.ShowToast("录入未完成，请到敌人页查看提示");
+                sidePanel.ShowToast(message);
             });
 
         _banScreenAnalyzer.AutoBanListComputed += names =>
@@ -457,6 +462,7 @@ public partial class App : Application
             _ocrScanner.MarkInformationRecorded();
             Dispatcher.Invoke(() =>
             {
+                banVm.SetCovenantBans(result.CoreCovenants.Concat(result.AdditionalCovenants).Where(c => c.IsBanned).Select(c => c.Name));
                 operatorVm.SetAvailableCovenants(result.CoreCovenants.Concat(result.AdditionalCovenants)
                     .Where(c => !c.IsBanned).Select(c => c.Name));
                 sidePanel.ShowToast("本局信息已录入");

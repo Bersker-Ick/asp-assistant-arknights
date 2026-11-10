@@ -322,7 +322,10 @@ public static class BanCovenantReader
         if (knownNames.Count == 0) return [];
 
         // Real opening capture: PaddleOCR drops 比 inside a merged covenant-name line.
-        var clean = ocr.Text.Trim().Replace("伊利亚", "伊比利亚", StringComparison.Ordinal);
+        var clean = ocr.Text.Trim()
+            .Replace("伊利亚", "伊比利亚", StringComparison.Ordinal)
+            // The live 4K frame occasionally drops 戈 from 阿戈尔 inside a merged line.
+            .Replace("阿尔", "阿戈尔", StringComparison.Ordinal);
         if (clean.Length == 0) return [];
         if (SectionNoiseFragments.Any(f => clean.Contains(f, StringComparison.Ordinal))) return [];
 

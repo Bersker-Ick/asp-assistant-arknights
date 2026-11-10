@@ -131,7 +131,34 @@ public class JsonDataStore
             }
         }
 
+        await ApplyCovenantEffectsAsync(covenants);
         return (covenants, jobChangeMap);
+    }
+
+    /// <summary>
+    /// Applies the hand-maintained effect texts from <c>data/covenant_effects.json</c>
+    /// (copied from the in-game S.W.E.E.P. 盟约报告). The file is never written by
+    /// <c>fetch_spdatabase.py</c>; covenants without an entry keep an empty effect list.
+    /// </summary>
+    private async Task ApplyCovenantEffectsAsync(List<CovenantInfo> covenants)
+    {
+        var path = Path.Combine(_dataDirectory, "covenant_effects.json");
+        if (!File.Exists(path))
+            return;
+
+        var json = await File.ReadAllTextAsync(path);
+        var wrapper = JsonSerializer.Deserialize<CovenantEffectDataFile>(json, JsonOptions);
+        if (wrapper?.Covenants is not { Count: > 0 } effects)
+            return;
+
+        foreach (var covenant in covenants)
+            if (effects.TryGetValue(covenant.Name, out var list))
+                covenant.Effects = list.Where(e => !string.IsNullOrWhiteSpace(e.Text)).ToList();
+    }
+
+    private class CovenantEffectDataFile
+    {
+        public Dictionary<string, List<CovenantEffect>> Covenants { get; set; } = [];
     }
 
     private class OperatorDataFile

@@ -25,6 +25,7 @@ public partial class SidePanelWindow : Window
     public BanViewModel BanVm { get; }
     public EnemyViewModel EnemyVm { get; }
     public LineupViewModel LineupVm { get; }
+    public LineupPlannerViewModel PlannerVm { get; private set; } = null!;
 
     public event Action? ManualScanRequested;
     public event Action? EnemyRecognitionRequested;
@@ -33,6 +34,8 @@ public partial class SidePanelWindow : Window
     private readonly LineupShareService _lineupShareService;
     private readonly IReadOnlyList<Operator> _allOperators;
     private readonly IReadOnlyList<Equipment> _allEquipment;
+    private readonly LineupPlanner _lineupPlanner;
+    private readonly IReadOnlyList<CovenantInfo> _covenants;
     private readonly DispatcherTimer _toastHideTimer;
 
     private UpdateService? _updateService;
@@ -77,7 +80,9 @@ public partial class SidePanelWindow : Window
         IReadOnlyList<Operator> allOperators,
         IReadOnlyList<Equipment> allEquipment,
         SettingsManager settingsManager,
-        GameShopTheme gameTheme)
+        GameShopTheme gameTheme,
+        LineupPlanner? lineupPlanner = null,
+        IReadOnlyList<CovenantInfo>? covenants = null)
     {
         OperatorBrowseVm = operatorVm;
         EquipmentBrowseVm = equipmentVm;
@@ -89,6 +94,8 @@ public partial class SidePanelWindow : Window
         _lineupShareService = lineupShareService;
         _allOperators = allOperators;
         _allEquipment = allEquipment;
+        _lineupPlanner = lineupPlanner ?? new LineupPlanner(allOperators, covenants ?? []);
+        _covenants = covenants ?? [];
         _settingsManager = settingsManager;
         GameTheme = gameTheme;
 
@@ -589,6 +596,52 @@ public partial class SidePanelWindow : Window
                 ShowToast($"追踪失败：{ex.Message}");
             }
         };
+        WirePlannerView();
+    }
+
+    private void WirePlannerView()
+    {
+        PlannerVm = new LineupPlannerViewModel(_lineupPlanner, _allOperators, BanVm)
+        {
+            TrackedOperatorsProvider = () => TrackingVm.TrackedOperators.Select(e => e.Name).ToList(),
+            RunOnUiThread = action =>
+            {
+                if (Dispatcher.CheckAccess()) action();
+                else Dispatcher.BeginInvoke(action);
+            }
+        };
+        PlannerVm.SaveRequested += async lineup =>
+        {
+            try
+            {
+                await LineupVm.AddOrUpdateAsync(lineup);
+                LineupView.RefreshAllBadges();
+                ShowToast($"已保存阵容“{lineup.Name}”");
+            }
+            catch (Exception ex)
+            {
+                ShowToast($"保存失败：{ex.Message}");
+            }
+        };
+        PlannerVm.TrackRequested += lineup =>
+        {
+            try
+            {
+                var added = TrackingVm.TrackLineup(lineup);
+                ShowToast($"已追踪规划阵容：新增 {added.Operators} 名干员");
+            }
+            catch (Exception ex)
+            {
+                ShowToast($"追踪失败：{ex.Message}");
+            }
+        };
+        PlannerVm.SetAvailableCovenants(OperatorBrowseVm.HighlightedCovenants);
+        OperatorBrowseVm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(OperatorBrowseViewModel.HighlightedCovenants))
+                Dispatcher.Invoke(() => PlannerVm.SetAvailableCovenants(OperatorBrowseVm.HighlightedCovenants));
+        };
+        PlannerView.DataContext = PlannerVm;
     }
 
     private void OpenEditor(Lineup? source)

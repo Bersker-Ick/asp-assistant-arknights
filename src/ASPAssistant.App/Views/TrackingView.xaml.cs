@@ -1,8 +1,11 @@
 // Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md.
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using ASPAssistant.App.Controls;
 using ASPAssistant.Core.Models;
+using ASPAssistant.Core.ViewModels;
 
 namespace ASPAssistant.App.Views;
 
@@ -17,13 +20,75 @@ public partial class TrackingView : UserControl
     public IReadOnlyDictionary<string, Operator> OperatorDatabase
         => (IReadOnlyDictionary<string, Operator>)GetValue(OperatorDatabaseProperty);
 
+    private TrackingViewModel? _vm;
+    private INotifyCollectionChanged? _operators;
+    private INotifyCollectionChanged? _equipment;
+
     public TrackingView()
     {
         InitializeComponent();
+        DataContextChanged += (_, _) => Attach(DataContext as TrackingViewModel);
     }
 
     public void SetOperators(IReadOnlyList<Operator> operators)
-        => SetValue(OperatorDatabaseProperty, operators.ToDictionary(o => o.Name));
+    {
+        SetValue(OperatorDatabaseProperty, operators.GroupBy(o => o.Name).ToDictionary(g => g.Key, g => g.First()));
+        RefreshSummary();
+    }
+
+    private void Attach(TrackingViewModel? vm)
+    {
+        if (_vm is not null) _vm.PropertyChanged -= OnVmPropertyChanged;
+        _vm = vm;
+        if (_vm is not null) _vm.PropertyChanged += OnVmPropertyChanged;
+        HookCollections();
+    }
+
+    private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(TrackingViewModel.TrackedOperators) or nameof(TrackingViewModel.TrackedEquipment))
+            HookCollections();
+    }
+
+    private void HookCollections()
+    {
+        if (_operators is not null) _operators.CollectionChanged -= OnCollectionChanged;
+        if (_equipment is not null) _equipment.CollectionChanged -= OnCollectionChanged;
+        _operators = _vm?.TrackedOperators;
+        _equipment = _vm?.TrackedEquipment;
+        if (_operators is not null) _operators.CollectionChanged += OnCollectionChanged;
+        if (_equipment is not null) _equipment.CollectionChanged += OnCollectionChanged;
+        RefreshSummary();
+    }
+
+    private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => RefreshSummary();
+
+    /// <summary>Updates the empty state and the covenant tally of tracked operators.</summary>
+    private void RefreshSummary()
+    {
+        var operators = _vm?.TrackedOperators.ToList() ?? [];
+        var equipmentCount = _vm?.TrackedEquipment.Count ?? 0;
+        var empty = operators.Count == 0 && equipmentCount == 0;
+        EmptyState.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
+        ClearAllButton.Visibility = empty ? Visibility.Collapsed : Visibility.Visible;
+
+        var db = OperatorDatabase;
+        var tally = new Dictionary<string, (int Count, bool IsCore)>(StringComparer.Ordinal);
+        foreach (var entry in operators)
+        {
+            if (!db.TryGetValue(entry.Name, out var op)) continue;
+            foreach (var c in op.CoreCovenants)
+                tally[c] = (tally.GetValueOrDefault(c).Count + 1, true);
+            foreach (var c in op.AdditionalCovenants)
+                tally[c] = (tally.GetValueOrDefault(c).Count + 1, tally.GetValueOrDefault(c).IsCore);
+        }
+        TrackedCovenantChips.ItemsSource = tally
+            .OrderByDescending(x => x.Value.IsCore)
+            .ThenByDescending(x => x.Value.Count)
+            .Select(x => new TrackedCovenantChip(x.Key, x.Value.Count, x.Value.IsCore))
+            .ToList();
+        CovenantSection.Visibility = tally.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
 
     private void OnTrackedOperatorToggled(object sender, RoutedEventArgs e)
     {
@@ -44,3 +109,5 @@ public partial class TrackingView : UserControl
         ClearAllTrackingRequested?.Invoke();
     }
 }
+
+public sealed record TrackedCovenantChip(string Name, int Count, bool IsCore);
