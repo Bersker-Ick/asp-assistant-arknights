@@ -34,6 +34,7 @@
     <SolidColorBrush x:Key="InputOverlayBrush" Color="#FFFFFFFF" />
     <SolidColorBrush x:Key="ScrollThumbBrush" Color="#88718299" />
     <SolidColorBrush x:Key="EliteBrush" Color="#FF875900" />
+    <SolidColorBrush x:Key="EliteTintBrush" Color="#14875900" />
     <SolidColorBrush x:Key="DangerBrush" Color="#FFB91C1C" />
     <SolidColorBrush x:Key="DangerMutedBrush" Color="#FFB91C1C" />
     <SolidColorBrush x:Key="DangerTintBrush" Color="#1AB91C1C" />

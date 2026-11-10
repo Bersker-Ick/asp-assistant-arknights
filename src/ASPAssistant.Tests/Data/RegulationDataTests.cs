@@ -24,6 +24,20 @@ public class RegulationDataTests
     }
 
     [Fact]
+    public async Task Covenants_LoadHandMaintainedEffects()
+    {
+        var (covenants, _) = await _store.LoadCovenantsAsync();
+
+        covenants.Should().HaveCount(26);
+        covenants.Should().OnlyContain(c => c.Effects.Count > 0);
+        var fire = covenants.Single(c => c.Name == "炎");
+        fire.Effects[0].HasCondition.Should().BeFalse();
+        fire.Effects[0].Text.Should().StartWith("【炎】干员攻击力");
+        fire.Effects.Should().Contain(e => e.Condition == "在场6名不同的【炎】干员");
+        covenants.Single(c => c.Name == "远见").Effects.Should().Contain(e => e.Text.Contains("整备区"));
+    }
+
+    [Fact]
     public async Task Equipment_NewHammerCanBeFoundByJobChangeFilter()
     {
         var operators = await _store.LoadOperatorsAsync();

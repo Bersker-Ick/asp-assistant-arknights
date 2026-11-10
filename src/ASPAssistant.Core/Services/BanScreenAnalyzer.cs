@@ -130,6 +130,8 @@ public sealed class BanScreenAnalyzer
             }
 
             var (rawWidth, rawHeight) = GetPngDimensions(shot);
+            AppLogger.SaveArtifact("ban-attempt", shot, ".png");
+            AppLogger.Info("BanAnalyzer", $"Screenshot ready: {rawWidth}x{rawHeight}");
 
             // 小图（例如被缩放过的录像截图）先把文字放大到 OCR 能读的尺寸；
             // 区域都是百分比，布局不受影响，后续全部使用放大后的尺寸。
@@ -163,26 +165,27 @@ public sealed class BanScreenAnalyzer
                 ? read.Additional.Count == read.AdditionalSlots
                 : read.Additional.Count >= 4;
             var unnamed = read.UnnamedCore.Count + read.UnnamedAdditional.Count;
-            if (!hasCore || !hasAdditional || unnamed > 0
-                || enemy is null || enemy.BossName.Length == 0 || enemy.EnemyTypes.Count == 0)
+            if (!hasCore || !hasAdditional || unnamed > 0)
             {
                 AnalysisFailed?.Invoke($"本次信息未完整读出（核心 {read.Core.Count}、附加 {read.Additional.Count}、未命名 {unnamed}），未替换现有结果；请保持页面完整可见后重试。");
                 return;
             }
-            var enemyFaction = enemy.BossName;
+            var hasEnemy = enemy is not null && enemy.BossName.Length > 0 && enemy.EnemyTypes.Count > 0;
+            var enemyFaction = hasEnemy ? enemy!.BossName : null;
 
             sw.Stop();
             var result = new BanScreenResult(read.Core, read.Additional, enemyFaction);
             var autoBans = ComputeAutoBans(result);
             LogRecognitionSummary(result, autoBans);
             AutoBanListComputed?.Invoke(autoBans);
-            EnemyDetected?.Invoke(enemy);
+            if (hasEnemy) EnemyDetected?.Invoke(enemy!);
+            else AppLogger.Warn("BanAnalyzer", "Covenant Ban read succeeded, but enemy region was incomplete; publishing covenant result only");
             LogResults(result, sw.ElapsedMilliseconds);
 
             _lastShotHash = shotHash;
             _lastResult = result;
             _lastAutoBans = autoBans;
-            _lastEnemy = enemy;
+            _lastEnemy = hasEnemy ? enemy : null;
             AnalysisCompleted?.Invoke(result);
             await ShowTimedGameOverlayMessageAsync("识别成功！ASP Assistant 祝您卫戍愉快！", 2000);
         }

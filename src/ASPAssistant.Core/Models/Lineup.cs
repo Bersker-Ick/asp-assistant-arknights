@@ -28,6 +28,10 @@ public class LineupSlot
     [JsonPropertyName("operatorName")]
     public string OperatorName { get; set; } = "";
 
+    /// <summary>规划器为该干员临时追加的转职盟约。</summary>
+    [JsonPropertyName("transformedCovenant")]
+    public string TransformedCovenant { get; set; } = "";
+
     /// <summary>装备名列表，最多 2 个。</summary>
     [JsonPropertyName("equipments")]
     public List<string> Equipments { get; set; } = [];
@@ -102,6 +106,26 @@ public class CovenantInfo
     /// <summary>激活该盟约所需的同盟约干员数；null 表示数据缺失，应在 user 配置中补齐。</summary>
     [JsonPropertyName("activateCount")]
     public int? ActivateCount { get; set; }
+
+    /// <summary>效果说明，来自手工维护的 data/covenant_effects.json（不写回 covenants.json）。</summary>
+    [JsonIgnore]
+    public List<CovenantEffect> Effects { get; set; } = [];
+}
+
+/// <summary>
+/// 一条盟约效果。<see cref="Condition"/> 为空表示激活后的基础效果，否则是游戏内 &lt;…&gt; 里的额外条件，
+/// 例如「在场6名不同的【炎】干员」「每叠加25层」。
+/// </summary>
+public class CovenantEffect
+{
+    [JsonPropertyName("condition")]
+    public string Condition { get; set; } = "";
+
+    [JsonPropertyName("text")]
+    public string Text { get; set; } = "";
+
+    [JsonIgnore]
+    public bool HasCondition => !string.IsNullOrWhiteSpace(Condition);
 }
 
 /// <summary>

@@ -58,6 +58,23 @@ public static class AppLogger
     public static void Error(string component, string message, Exception ex) =>
         WriteLine("ERROR", component, $"{message}: {ex}");
 
+    public static string? SaveArtifact(string prefix, byte[] bytes, string extension = ".bin")
+    {
+        try
+        {
+            if (_logFilePath is null) return null;
+            var dir = Path.GetDirectoryName(_logFilePath)!;
+            var path = Path.Combine(dir, $"{prefix}-{DateTime.Now:HHmmssfff}{extension}");
+            File.WriteAllBytes(path, bytes);
+            return path;
+        }
+        catch (Exception ex)
+        {
+            WriteLine("WARN ", "AppLogger", $"Failed to save artifact: {ex.Message}");
+            return null;
+        }
+    }
+
     private static void WriteLine(string level, string component, string message)
     {
         var line = $"[{DateTime.Now:HH:mm:ss.fff}] [{level}] [{component}] {message}";

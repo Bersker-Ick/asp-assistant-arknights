@@ -9,138 +9,142 @@
     <UserControl.Resources>
         <converters:TrackedOperatorConverter x:Key="TrackedOperator" />
         <converters:TrackedEquipmentConverter x:Key="TrackedEquipment" />
-        <DataTemplate DataType="{x:Type models:Operator}">
-            <controls:OperatorCard IsTrackingList="True" TrackingToggled="OnTrackedOperatorToggled" />
-        </DataTemplate>
         <DataTemplate DataType="{x:Type models:Equipment}">
             <controls:TrackedEquipmentCard TrackingToggled="OnTrackedEquipmentToggled" />
         </DataTemplate>
+
+        <DataTemplate DataType="{x:Type models:Operator}">
+            <controls:OperatorCard IsTrackingList="True" TrackingToggled="OnTrackedOperatorToggled" />
+        </DataTemplate>
+
+        <!-- Tracked name that is not in the operator data -->
         <DataTemplate DataType="{x:Type models:TrackingEntry}">
-            <Border Style="{StaticResource ItemCardBorder}" ToolTip="当前数据中没有该追踪项的详情">
+            <Border Style="{StaticResource ItemCardBorder}" Padding="8,6" Margin="0,0,0,4" CornerRadius="6"
+                    ToolTip="当前数据中没有该干员的详情">
                 <DockPanel>
-                    <Button DockPanel.Dock="Right" Content="✕" Tag="{Binding Name}"
-                            Style="{StaticResource TrackingButton}" Click="OnRemoveTracking" />
+                    <Button DockPanel.Dock="Right" Content="✕" Tag="{Binding Name}" Width="25" Height="25" Padding="0"
+                            Style="{StaticResource TrackingButton}" Click="OnRemoveTracking" ToolTip="取消追踪" />
                     <TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextPrimaryBrush}"
-                               FontSize="12" VerticalAlignment="Center" />
+                               FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
                 </DockPanel>
             </Border>
         </DataTemplate>
     </UserControl.Resources>
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="8">
-            <TextBlock Text="当前盟约持有" FontSize="12" FontWeight="Bold" Visibility="Collapsed"
-                       Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,4" />
-            <Border Background="{DynamicResource CardBackgroundBrush}" Visibility="Collapsed"
-                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                    CornerRadius="4" Padding="8" Margin="0,0,0,12">
-                <ItemsControl x:Name="CovenantCountsPanel">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                </ItemsControl>
-            </Border>
 
-            <DockPanel Margin="0,0,0,4">
-                <TextBlock DockPanel.Dock="Left" FontSize="12" FontWeight="Bold"
-                           VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextPrimaryBrush}">
-                    <Run Text="追踪中的干员 (" /><Run Text="{Binding TrackedOperators.Count, Mode=OneWay}" /><Run Text=")" />
-                </TextBlock>
-                <Button DockPanel.Dock="Right" Content="一键清除" FontSize="11"
-                        Padding="8,2" Margin="6,0,0,0"
-                        HorizontalAlignment="Right"
-                        Click="OnClearAllTracking">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource ClickableButtonBase}">
-                            <Setter Property="Background" Value="{DynamicResource DangerTintBrush}" />
-                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
-                            <Setter Property="BorderBrush" Value="{DynamicResource DangerBorderBrush}" />
-                            <Setter Property="BorderThickness" Value="1" />
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}"
-                                                BorderBrush="{TemplateBinding BorderBrush}"
-                                                BorderThickness="{TemplateBinding BorderThickness}"
-                                                CornerRadius="3"
-                                                Padding="{TemplateBinding Padding}">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="{DynamicResource DangerBorderBrush}" />
-                                            </Trigger>
-                                            <Trigger Property="IsPressed" Value="True">
-                                                <Setter Property="Background" Value="{DynamicResource DangerHoverBrush}" />
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </Button.Style>
-                </Button>
-            </DockPanel>
-            <ItemsControl ItemsSource="{Binding TrackedOperators}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <ContentControl>
-                            <ContentControl.Content>
-                                <MultiBinding Converter="{StaticResource TrackedOperator}" Mode="OneWay">
-                                    <Binding />
-                                    <Binding Path="OperatorDatabase"
-                                             RelativeSource="{RelativeSource AncestorType=UserControl}" />
-                                </MultiBinding>
-                            </ContentControl.Content>
-                        </ContentControl>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+    <Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="8,10,8,8">
+                <!-- Summary -->
+                <DockPanel Margin="2,0,0,4">
+                    <Button DockPanel.Dock="Right" x:Name="ClearAllButton" Content="全部清除" Tag="danger"
+                            Style="{StaticResource SmallActionButton}" Click="OnClearAllTracking"
+                            ToolTip="清空追踪列表（干员和装备）" />
+                    <TextBlock VerticalAlignment="Center" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}">
+                        <Run Text="追踪 " /><Run Text="{Binding TrackedOperators.Count, Mode=OneWay}" FontWeight="Bold"
+                        /><Run Text=" 干员 · " /><Run Text="{Binding TrackedEquipment.Count, Mode=OneWay}" FontWeight="Bold"
+                        /><Run Text=" 装备" />
+                    </TextBlock>
+                </DockPanel>
+                <TextBlock Text="商店里出现追踪目标时，会在名称上方标出绿色星号。" FontSize="10" TextWrapping="Wrap"
+                           Margin="2,0,0,10" Foreground="{DynamicResource TextSecondaryBrush}" />
 
-            <TextBlock FontSize="12" FontWeight="Bold"
-                       Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,12,0,4">
-                <Run Text="追踪中的装备 (" /><Run Text="{Binding TrackedEquipment.Count, Mode=OneWay}" /><Run Text=")" />
-            </TextBlock>
-            <ItemsControl ItemsSource="{Binding TrackedEquipment}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <ContentControl>
-                            <ContentControl.Content>
-                                <MultiBinding Converter="{StaticResource TrackedEquipment}" Mode="OneWay">
-                                    <Binding />
-                                    <Binding Path="EquipmentDatabase"
-                                             RelativeSource="{RelativeSource AncestorType=UserControl}" />
-                                </MultiBinding>
-                            </ContentControl.Content>
-                        </ContentControl>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-
-            <TextBlock Text="游戏状态（实时 OCR）" FontSize="12" FontWeight="Bold" Visibility="Collapsed"
-                       Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,12,0,4" />
-            <Border Background="{DynamicResource CardBackgroundBrush}" Visibility="Collapsed"
-                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                    CornerRadius="4" Padding="8">
-                <StackPanel DataContext="{Binding GameState}">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                        <TextBlock Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12">
-                            <Run Text="回合: " /><Run Text="{Binding CurrentRound}" />
-                        </TextBlock>
-                        <TextBlock Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" Margin="16,0,0,0">
-                            <Run Text="金币: " /><Run Text="{Binding Gold}" />
-                        </TextBlock>
-                    </StackPanel>
-                    <ItemsControl ItemsSource="{Binding TrackingAlerts}">
+                <!-- Covenants the tracked operators bring -->
+                <StackPanel x:Name="CovenantSection" Visibility="Collapsed" Margin="0,0,0,10">
+                    <ContentControl Style="{StaticResource FilterGroupHeader}" Content="目标盟约分布" />
+                    <ItemsControl x:Name="TrackedCovenantChips" Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding}" Foreground="{DynamicResource TrackingBrush}"
-                                           FontSize="12" FontWeight="Bold" />
+                                <Border x:Name="chip" CornerRadius="10" Padding="7,1" Margin="0,0,5,5" BorderThickness="1"
+                                        Background="{DynamicResource NeutralTintBrush}" BorderBrush="{DynamicResource BorderBrush}">
+                                    <TextBlock FontSize="11" Foreground="{DynamicResource TextPrimaryBrush}">
+                                        <Run x:Name="chipName" Text="{Binding Name, Mode=OneWay}" /><Run Text=" " /><Run
+                                             Text="{Binding Count, Mode=OneWay}" FontWeight="Bold" />
+                                    </TextBlock>
+                                </Border>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding IsCore}" Value="True">
+                                        <Setter TargetName="chip" Property="BorderBrush" Value="{DynamicResource AccentBorderBrush}" />
+                                        <Setter TargetName="chip" Property="Background" Value="{DynamicResource AccentSoftBrush}" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
-            </Border>
+
+                <!-- Operators -->
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding TrackedOperators.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <ContentControl Style="{StaticResource FilterGroupHeader}">
+                        <TextBlock><Run Text="干员 " /><Run Text="{Binding TrackedOperators.Count, Mode=OneWay}" /></TextBlock>
+                    </ContentControl>
+                    <ItemsControl ItemsSource="{Binding TrackedOperators}" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <ContentControl Focusable="False">
+                                    <ContentControl.Content>
+                                        <MultiBinding Converter="{StaticResource TrackedOperator}" Mode="OneWay">
+                                            <Binding />
+                                            <Binding Path="OperatorDatabase"
+                                                     RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                                        </MultiBinding>
+                                    </ContentControl.Content>
+                                </ContentControl>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- Equipment -->
+                <StackPanel Margin="0,8,0,0">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding TrackedEquipment.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <ContentControl Style="{StaticResource FilterGroupHeader}">
+                        <TextBlock><Run Text="装备 " /><Run Text="{Binding TrackedEquipment.Count, Mode=OneWay}" /></TextBlock>
+                    </ContentControl>
+                    <ItemsControl ItemsSource="{Binding TrackedEquipment}" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <ContentControl Focusable="False">
+                                    <ContentControl.Content>
+                                        <MultiBinding Converter="{StaticResource TrackedEquipment}" Mode="OneWay">
+                                            <Binding />
+                                            <Binding Path="EquipmentDatabase" RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                                        </MultiBinding>
+                                    </ContentControl.Content>
+                                </ContentControl>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Empty state -->
+        <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="28,0" Visibility="Collapsed">
+            <TextBlock Text="☆" FontSize="30" HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+            <TextBlock Text="还没有追踪目标" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,6,0,4"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
+            <TextBlock Text="在干员、装备页点 ☆，或在阵容、规划页点“追踪”，商店刷出目标时就会提示。"
+                       FontSize="11" TextWrapping="Wrap" TextAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
         </StackPanel>
-    </ScrollViewer>
+    </Grid>
 </UserControl>
