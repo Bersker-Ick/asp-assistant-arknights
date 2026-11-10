@@ -1,4 +1,4 @@
-<!-- Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md. -->
+<!-- Modified for ASP Assistant Regulation on 2026-11-09; see NOTICE. -->
 <UserControl x:Class="ASPAssistant.App.Views.TrackingView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -8,11 +8,15 @@
              Background="{DynamicResource PanelBackgroundBrush}">
     <UserControl.Resources>
         <converters:TrackedOperatorConverter x:Key="TrackedOperator" />
+        <converters:TrackedEquipmentConverter x:Key="TrackedEquipment" />
         <DataTemplate DataType="{x:Type models:Operator}">
             <controls:OperatorCard IsTrackingList="True" TrackingToggled="OnTrackedOperatorToggled" />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type models:Equipment}">
+            <controls:TrackedEquipmentCard TrackingToggled="OnTrackedEquipmentToggled" />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type models:TrackingEntry}">
-            <Border Style="{StaticResource ItemCardBorder}" ToolTip="当前数据中没有该干员的详情">
+            <Border Style="{StaticResource ItemCardBorder}" ToolTip="当前数据中没有该追踪项的详情">
                 <DockPanel>
                     <Button DockPanel.Dock="Right" Content="✕" Tag="{Binding Name}"
                             Style="{StaticResource TrackingButton}" Click="OnRemoveTracking" />
@@ -100,14 +104,15 @@
             <ItemsControl ItemsSource="{Binding TrackedEquipment}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Style="{StaticResource ItemCardBorder}">
-                            <DockPanel>
-                                <Button DockPanel.Dock="Right" Content="✕" Tag="{Binding Name}"
-                                        Style="{StaticResource TrackingButton}" Click="OnRemoveTracking" />
-                                <TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextPrimaryBrush}"
-                                           FontSize="12" VerticalAlignment="Center" />
-                            </DockPanel>
-                        </Border>
+                        <ContentControl>
+                            <ContentControl.Content>
+                                <MultiBinding Converter="{StaticResource TrackedEquipment}" Mode="OneWay">
+                                    <Binding />
+                                    <Binding Path="EquipmentDatabase"
+                                             RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                                </MultiBinding>
+                            </ContentControl.Content>
+                        </ContentControl>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

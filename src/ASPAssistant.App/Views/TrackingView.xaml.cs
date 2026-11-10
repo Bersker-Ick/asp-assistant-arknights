@@ -1,4 +1,4 @@
-// Modified for ASP Assistant Regulation on 2026-11-09; see MODIFICATIONS.md.
+// Modified for ASP Assistant Regulation on 2026-11-09; see NOTICE.
 using System.Windows;
 using System.Windows.Controls;
 using ASPAssistant.App.Controls;
@@ -17,6 +17,13 @@ public partial class TrackingView : UserControl
     public IReadOnlyDictionary<string, Operator> OperatorDatabase
         => (IReadOnlyDictionary<string, Operator>)GetValue(OperatorDatabaseProperty);
 
+    public static readonly DependencyProperty EquipmentDatabaseProperty = DependencyProperty.Register(
+        nameof(EquipmentDatabase), typeof(IReadOnlyDictionary<string, Equipment>), typeof(TrackingView),
+        new PropertyMetadata(new Dictionary<string, Equipment>()));
+
+    public IReadOnlyDictionary<string, Equipment> EquipmentDatabase
+        => (IReadOnlyDictionary<string, Equipment>)GetValue(EquipmentDatabaseProperty);
+
     public TrackingView()
     {
         InitializeComponent();
@@ -24,6 +31,15 @@ public partial class TrackingView : UserControl
 
     public void SetOperators(IReadOnlyList<Operator> operators)
         => SetValue(OperatorDatabaseProperty, operators.ToDictionary(o => o.Name));
+
+    public void SetEquipment(IReadOnlyList<Equipment> equipment)
+        => SetValue(EquipmentDatabaseProperty, equipment.ToDictionary(e => e.Name));
+
+    private void OnTrackedEquipmentToggled(object sender, RoutedEventArgs e)
+    {
+        if (e.OriginalSource is TrackedEquipmentCard { DataContext: Equipment equipment })
+            RemoveTrackingRequested?.Invoke(equipment.Name);
+    }
 
     private void OnTrackedOperatorToggled(object sender, RoutedEventArgs e)
     {
