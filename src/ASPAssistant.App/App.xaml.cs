@@ -517,7 +517,9 @@ public partial class App : Application
                 banVm.SetCovenantBans(result.CoreCovenants.Concat(result.AdditionalCovenants).Where(c => c.IsBanned).Select(c => c.Name));
                 operatorVm.SetAvailableCovenants(result.CoreCovenants.Concat(result.AdditionalCovenants)
                     .Where(c => !c.IsBanned).Select(c => c.Name));
-                sidePanel.ShowToast("本局信息已录入");
+                if (result.EnemyFaction is null)
+                    enemyVm.RecognitionFailed("盟约已录入，本次敌人信息未完整读出，可在敌人页重试。");
+                sidePanel.ShowToast(result.EnemyFaction is null ? "盟约已录入，敌人信息可在敌人页重试" : "本局信息已录入");
             });
         };
 

@@ -21,8 +21,8 @@ public record BanScreenResult(
 /// Orchestrates the ban-screen analysis: one screenshot of the "确认本局信息" screen,
 /// enemy recognition plus <see cref="BanCovenantReader"/> for both covenant panels.
 ///
-/// Both opening and in-game info pages are supported. Incomplete scans never publish
-/// replacement state and never scroll the game; the user can retry from the same page.
+/// Both opening and in-game info pages are supported. Incomplete covenant scans never
+/// replace state; complete covenants may publish independently of enemy recognition.
 /// </summary>
 public sealed class BanScreenAnalyzer
 {
@@ -42,8 +42,7 @@ public sealed class BanScreenAnalyzer
     public event Action<string>? AnalysisFailed;
 
     /// <summary>
-    /// Raised when enemy recognition completes (before the full analysis finishes).
-    /// Fired even if recognition returns partial results.
+    /// Raised when complete enemy information is available, before covenant publication.
     /// </summary>
     public event Action<EnemyResult>? EnemyDetected;
 
@@ -187,7 +186,9 @@ public sealed class BanScreenAnalyzer
             _lastAutoBans = autoBans;
             _lastEnemy = hasEnemy ? enemy : null;
             AnalysisCompleted?.Invoke(result);
-            await ShowTimedGameOverlayMessageAsync("识别成功！ASP Assistant 祝您卫戍愉快！", 2000);
+            await ShowTimedGameOverlayMessageAsync(hasEnemy
+                ? "识别成功！ASP Assistant 祝您卫戍愉快！"
+                : "盟约已录入，敌人信息可在敌人页重试", 2000);
         }
         catch (Exception ex)
         {

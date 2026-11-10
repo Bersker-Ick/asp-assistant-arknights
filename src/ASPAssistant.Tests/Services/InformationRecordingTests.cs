@@ -117,6 +117,36 @@ public class InformationRecordingTests(EnemyRecognitionFixture fixture, ITestOut
         vm.RecognitionStatus.Should().Contain("保留上次录入结果");
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CompleteCovenantsPublishWithoutEnemyAndCacheDoesNotPublishPartialEnemy(bool bossOnly)
+    {
+        var bytes = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "TestData", "info-ingame-1920x1080.png"));
+        var ocr = new Mock<IOcrEngine>();
+        ocr.Setup(e => e.RecognizeRegionAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(),
+            It.IsAny<int>(), It.IsAny<int>())).Returns((byte[] png, int x, int y, int w, int h) =>
+                x > 1200
+                    ? Task.FromResult<IReadOnlyList<OcrTextResult>>(bossOnly
+                        ? [new("敌方领袖", (1540, 460, 160, 30)), new("盐风主教昆图斯", (1500, 510, 240, 30))]
+                        : [])
+                    : fixture.Engine.RecognizeRegionAsync(png, x, y, w, h));
+        var analyzer = await CreateAnalyzerAsync(bytes, ocr.Object);
+        var results = new List<BanScreenResult>();
+        var enemyEvents = 0;
+        var failures = 0;
+        analyzer.AnalysisCompleted += results.Add;
+        analyzer.EnemyDetected += _ => enemyEvents++;
+        analyzer.AnalysisFailed += _ => failures++;
+        await analyzer.RunAnalysisAsync();
+        await analyzer.RunAnalysisAsync();
+        results.Should().HaveCount(2);
+        results.Should().OnlyContain(r => r.CoreCovenants.Count == 10
+            && r.AdditionalCovenants.Count == 16 && r.EnemyFaction == null);
+        enemyEvents.Should().Be(0);
+        failures.Should().Be(0);
+    }
+
     private async Task<BanScreenAnalyzer> CreateAnalyzerAsync(byte[]? bytes, IOcrEngine ocr)
     {
         var store = new JsonDataStore(Path.Combine(AppContext.BaseDirectory, "data"));

@@ -251,7 +251,7 @@ public class ThemeAndHighlightTests
                 var sidePanel = new SidePanelWindow(vm, equipmentVm, trackingVm,
                     new GameStateViewModel(), new BanViewModel(), enemyVm,
                     lineupVm, new LineupShareService(failedShareHttp), operators, equipment, strategies, new SettingsManager(output), GameShopTheme.Terminal,
-                    new SidePanelPositionSettings());
+                    new SidePanelPositionSettings(), new LineupPlanner(operators, covenants), covenants);
                 try
                 {
                     SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(Dispatcher.CurrentDispatcher));
@@ -512,6 +512,32 @@ public class ThemeAndHighlightTests
                             page.ActualWidth.Should().BeGreaterThan(290);
                             ((SolidColorBrush)page.Background).Color.Should().Be(isLight
                                 ? Color.FromRgb(247, 249, 252) : Color.FromRgb(26, 26, 46));
+                            if (page is LineupPlannerView plannerView)
+                            {
+                                plannerView.DataContext.Should().BeSameAs(sidePanel.PlannerVm);
+                                sidePanel.PlannerVm.CoreCovenants.Should().HaveCount(10);
+                                sidePanel.PlannerVm.ExtraCovenants.Should().HaveCount(16);
+                                sidePanel.PlannerVm.AllCovenants.Should().Contain(c => c.HasEffects);
+                                var levelButton = Descendants<Button>(plannerView).First(b => b.Name == "lv1");
+                                levelButton.IsEnabled.Should().BeTrue();
+                                var levelText = Descendants<TextBlock>(levelButton).Single(t => t.Text == "Ⅰ");
+                                ((SolidColorBrush)levelText.Foreground).Color.Should().Be(
+                                    ((SolidColorBrush)levelButton.Foreground).Color,
+                                    "the planner level label must follow its button's theme foreground");
+                                sidePanel.Width = 280;
+                                content.Measure(new Size(280, 900));
+                                content.Arrange(new Rect(0, 0, 280, 900));
+                                content.UpdateLayout();
+                                content.ActualWidth.Should().Be(280);
+                                foreach (var button in Descendants<Button>(plannerView).Where(b => b.Name is "lv1" or "lv2"))
+                                    button.TranslatePoint(new Point(button.ActualWidth, 0), plannerView).X
+                                        .Should().BeLessThanOrEqualTo(plannerView.ActualWidth);
+                                Save(content, Path.Combine(output, isLight ? "light-planner-narrow.png" : "dark-planner-narrow.png"));
+                                sidePanel.Width = 310;
+                                content.Measure(new Size(310, 900));
+                                content.Arrange(new Rect(0, 0, 310, 900));
+                                content.UpdateLayout();
+                            }
                             if (page is EnemyView enemyView)
                             {
                                 var button = (Button)enemyView.FindName("RecognizeEnemyButton");
@@ -683,7 +709,7 @@ public class ThemeAndHighlightTests
                                 detail.PlacementTarget = (UIElement)hoverCard.FindName("CardBorder");
                                 detail.MaxHeight = 100;
                                 var row = (Border)hoverCard.FindName("CardBorder");
-                                row.ActualHeight.Should().Be(40);
+                                row.ActualHeight.Should().Be(42);
                                 detail.Opacity = 0; // Exercise the popup lifecycle without displaying test UI.
                                 detail.IsOpen = true;
                                 Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
@@ -807,9 +833,11 @@ public class ThemeAndHighlightTests
                                 removeUnknownEquipment.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                                 trackingVm.IsTracked("旧版已移除装备").Should().BeFalse();
                                 content.UpdateLayout();
+                                sidePanel.Width = 280;
                                 content.Measure(new Size(280, 900));
                                 content.Arrange(new Rect(0, 0, 280, 900));
                                 content.UpdateLayout();
+                                content.ActualWidth.Should().Be(280);
                                 foreach (var equipmentCard in Descendants<TrackedEquipmentCard>(trackingView))
                                 {
                                     var equipmentBorder = (Border)equipmentCard.FindName("CardBorder");
@@ -822,6 +850,10 @@ public class ThemeAndHighlightTests
                                     }
                                 }
                                 Save(content, Path.Combine(output, isLight ? "light-tracking-narrow.png" : "dark-tracking-narrow.png"));
+                                sidePanel.Width = 310;
+                                content.Measure(new Size(310, 900));
+                                content.Arrange(new Rect(0, 0, 310, 900));
+                                content.UpdateLayout();
                                 content.Measure(new Size(310, 900));
                                 content.Arrange(new Rect(0, 0, 310, 900));
                                 content.UpdateLayout();
