@@ -27,12 +27,58 @@ namespace ASPAssistant.Tests.Views;
 public class ThemeAndHighlightTests
 {
     [Fact]
+    public void UpdateDialog_ReportsDownloadProgress()
+    {
+        Exception? failure = null;
+        var thread = new Thread(() =>
+        {
+            // 同一 AppDomain 只能有一个 WPF Application；多个测试共用它，谁创建谁负责关闭。
+            var ownsApplication = Application.Current is null;
+            var application = Application.Current ?? new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+            try
+            {
+                foreach (var resource in new[] { "Themes/Dark.xaml", "Styles.xaml", "Logo.xaml" })
+                    application.Resources.MergedDictionaries.Add(new ResourceDictionary
+                    {
+                        Source = new Uri($"/ASPAssistant.App;component/Resources/{resource}", UriKind.Relative)
+                    });
+
+                var info = new ASPAssistant.Core.Services.UpdateInfo(
+                    "v9.9.9", "9.9.9", "- 测试更新说明", "https://example.test/a.zip", "a.zip", null);
+                // 不 Show()：在测试宿主里显示窗口会拉起到前台并可能拖垮 testhost。
+                var dialog = new UpdateDialog(info);
+                dialog.ReportProgress(0.42);
+                var bar = (System.Windows.Controls.ProgressBar)dialog.FindName("DialogProgress");
+                var percent = (TextBlock)dialog.FindName("ProgressPercentText");
+                var hint = (TextBlock)dialog.FindName("DownloadHintText");
+                bar.Value.Should().Be(42);
+                percent.Text.Should().Be("42%");
+                hint.Text.Should().StartWith("正在下载安装包");
+
+                dialog.ReportProgress(1.0);
+                bar.Value.Should().Be(100);
+                percent.Text.Should().Be("100%");
+                hint.Text.Should().Contain("立即重启");
+                dialog.Close();
+            }
+            catch (Exception ex) { failure = ex; }
+            finally { if (ownsApplication) application.Shutdown(); }
+        }) { IsBackground = true };
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join(TimeSpan.FromSeconds(60)).Should().BeTrue("WPF dialog test should finish");
+        if (failure is not null) ExceptionDispatchInfo.Capture(failure).Throw();
+    }
+
+    [Fact]
     public void ThemeSwitch_UpdatesControlsAndPreservesHighlightAndSelection()
     {
         Exception? failure = null;
         var thread = new Thread(() =>
         {
-            var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+            // 同一 AppDomain 只能有一个 WPF Application；多个测试共用它，谁创建谁负责关闭。
+            var ownsApplication = Application.Current is null;
+            var application = Application.Current ?? new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
             var host = new Window { ShowActivated = false, ShowInTaskbar = false };
             try
             {
@@ -696,7 +742,7 @@ public class ThemeAndHighlightTests
             finally
             {
                 host.Close();
-                application.Shutdown();
+                if (ownsApplication) application.Shutdown();
             }
         }) { IsBackground = true };
         thread.SetApartmentState(ApartmentState.STA);

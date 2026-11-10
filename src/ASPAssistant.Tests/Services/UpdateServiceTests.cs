@@ -109,7 +109,7 @@ public class UpdateServiceTests
         script.Should().Contain("$appPid = 4321");
         // 等待旧进程退出
         script.Should().Contain("Get-Process -Id $appPid");
-        script.Should().Contain("$timeout = 30");
+        script.Should().Contain("$timeout = 300");
         // staging 与安装目录同盘（都在父目录下）
         script.Should().Contain("'D:\\apps\\ASPAssistant-Staging-20261109-201500'");
         script.Should().Contain("'D:\\apps\\ASPAssistant-backup-20261109-201500'");
@@ -129,6 +129,35 @@ public class UpdateServiceTests
         script.Should().Contain("$silent = ($env:ASPA_UPDATE_SILENT -eq '1')");
         // 包不完整时拒绝安装
         script.Should().Contain("更新包不完整");
+    }
+
+    [Fact]
+    public void UpdateScript_RetriesRenameAndFallsBackToFileOverlay()
+    {
+        var script = UpdateService.BuildUpdateScript(
+            1, @"C:\tmp\src", @"D:\apps\app", @"D:\apps\app\ASPAssistant.App.exe",
+            @"D:\apps\staging", @"D:\apps\backup", @"C:\tmp\log.txt");
+
+        // 改名最多重试 10 次，每次 500ms
+        script.Should().Contain("for ($try = 1; $try -le 10; $try++)");
+        script.Should().Contain("rename attempt $try failed");
+        // 仍被占用时退化为文件级覆盖，而不是直接报“无法重命名”
+        script.Should().Contain("falling back to file overlay");
+        script.Should().Contain("Copy-Item -LiteralPath $_.FullName -Destination $target -Force");
+        script.Should().Contain("overlay copied=");
+        // 有文件仍被占用时的中文提示
+        script.Should().Contain("请完全退出辅助（含托盘图标）后重新检查更新");
+    }
+
+    [Fact]
+    public void DescribeError_ExplainsFileLockFromLeftoverUpdate()
+    {
+        var error = new IOException(
+            "The process cannot access the file 'C:\\tmp\\update.ps1' because it is being used by another process.");
+        UpdateService.DescribeError(error).Should().Contain("文件正被其他程序占用");
+
+        var other = new IOException("磁盘空间不足");
+        UpdateService.DescribeError(other).Should().StartWith("读写更新文件失败");
     }
 
     [Fact]

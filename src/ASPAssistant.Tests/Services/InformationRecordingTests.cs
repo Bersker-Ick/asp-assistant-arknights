@@ -139,9 +139,10 @@ public class InformationRecordingTests(EnemyRecognitionFixture fixture, ITestOut
             It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync((byte[] _, int x, int y, int w, int h) =>
                 x > 1200 ? [new("敌方领袖", (1540, 460, 160, 30)),
                     new("盐风主教昆图斯", (1500, 510, 240, 30)), new("特训敌人·隐匿", (1500, 635, 240, 30))]
-                : y < 150 ? [new("核心盟约", (200, 180, 160, 30)), new("附加盟约", (200, 460, 160, 30))]
-                : y < 300 ? [new("炎", (160, 390, 25, 25))]
-                : [new("迅捷", (150, 673, 50, 25))]);
+                // 页面检测已折进盟约区 OCR：标题与名字会在同一次调用里返回。
+                : y < 300 ? [new("核心盟约", (200, 180, 160, 30)), new("附加盟约", (200, 470, 160, 30)),
+                    new("炎", (160, 390, 25, 25))]
+                : [new("附加盟约", (200, 470, 160, 30)), new("迅捷", (150, 673, 50, 25))]);
         var analyzer = await CreateAnalyzerAsync(png.ToArray(), ocr.Object);
         int commits = 0;
         string? failure = null;

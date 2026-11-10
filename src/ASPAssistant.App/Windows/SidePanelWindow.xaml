@@ -136,12 +136,18 @@
                                    VerticalAlignment="Center" />
                     </DockPanel>
                     <!-- Download progress bar (visible during background download) -->
-                    <ProgressBar x:Name="UpdateBannerProgress"
-                                 Height="2" Margin="0,4,0,0"
-                                 Minimum="0" Maximum="100" Value="0"
-                                 Visibility="Collapsed"
-                                 Background="{DynamicResource NeutralStrongBrush}" Foreground="{DynamicResource SuccessBrush}"
-                                 BorderThickness="0" />
+                    <DockPanel Margin="0,4,0,0">
+                        <TextBlock x:Name="UpdateBannerPercent" DockPanel.Dock="Right"
+                                   Text="" FontSize="10" Margin="6,0,0,0" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource SuccessTextBrush}" Visibility="Collapsed" />
+                        <ProgressBar x:Name="UpdateBannerProgress"
+                                     Height="2"
+                                     Minimum="0" Maximum="100" Value="0"
+                                     Visibility="Collapsed"
+                                     VerticalAlignment="Center"
+                                     Background="{DynamicResource NeutralStrongBrush}" Foreground="{DynamicResource SuccessBrush}"
+                                     BorderThickness="0" />
+                    </DockPanel>
                 </StackPanel>
             </Border>
 

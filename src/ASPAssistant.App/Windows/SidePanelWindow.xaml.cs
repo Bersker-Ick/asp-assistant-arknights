@@ -45,6 +45,8 @@ public partial class SidePanelWindow : Window
     private UpdateInfo? _pendingUpdate;
     private Task? _downloadTask;
     private bool _isDownloadReady;
+    private UpdateDialog? _openUpdateDialog;
+    private double _lastUpdateProgress;
 
     // 用户意图追踪
     private bool _isUserPositioned;       // 用户手动移动过窗口
@@ -256,6 +258,8 @@ public partial class SidePanelWindow : Window
             UpdateActionText.Text = "查看更新";
             UpdateBannerProgress.Value = 0;
             UpdateBannerProgress.Visibility = Visibility.Visible;
+            UpdateBannerPercent.Text = "0%";
+            UpdateBannerPercent.Visibility = Visibility.Visible;
             UpdateBanner.Visibility = Visibility.Visible;
             _downloadTask = RunBackgroundDownloadAsync(info);
         }
@@ -273,7 +277,10 @@ public partial class SidePanelWindow : Window
         {
             Dispatcher.Invoke(() =>
             {
+                _lastUpdateProgress = value;
                 UpdateBannerProgress.Value = value * 100;
+                UpdateBannerPercent.Text = $"{(int)Math.Round(value * 100)}%";
+                _openUpdateDialog?.ReportProgress(value);
             });
         });
 
@@ -285,9 +292,12 @@ public partial class SidePanelWindow : Window
             Dispatcher.Invoke(() =>
             {
                 UpdateBannerProgress.Visibility = Visibility.Collapsed;
+                UpdateBannerPercent.Text = "100%";
+                UpdateBannerPercent.Visibility = Visibility.Visible;
                 UpdateActionIcon.Text = "↻ ";
                 UpdateActionText.Text = "立即重启";
-                UpdateStatusText.Text = $"新版本 {info.TagName} 已就绪，点击“立即重启”完成更新";
+                UpdateStatusText.Text = $"新版本 {info.TagName} 已就绪，点击“立即重启”完成更新（会自动关闭并重新打开）";
+                _openUpdateDialog?.ReportProgress(1.0);
             });
         }
         catch (Exception ex)
@@ -297,6 +307,7 @@ public partial class SidePanelWindow : Window
             Dispatcher.Invoke(() =>
             {
                 UpdateBannerProgress.Visibility = Visibility.Collapsed;
+                UpdateBannerPercent.Visibility = Visibility.Collapsed;
                 UpdateBannerText.Text = $"下载失败（{reason}），点击重试";
                 UpdateActionIcon.Text = "↺ ";
                 UpdateActionText.Text = "重试";
@@ -310,7 +321,16 @@ public partial class SidePanelWindow : Window
     {
         if (_isDownloadReady)
         {
-            Application.Current.Shutdown();
+            // 先让更新脚本接管，再退出本进程；脚本会等本进程结束后替换目录并启动新版。
+            if (!_updateService.LaunchPendingUpdateScript())
+            {
+                UpdateStatusText.Text = "更新文件已失效，请点击“检查更新”重新下载";
+                _isDownloadReady = false;
+                return;
+            }
+
+            UpdateStatusText.Text = "正在退出以完成更新…";
+            System.Windows.Application.Current.Shutdown();
             return;
         }
 
@@ -335,7 +355,16 @@ public partial class SidePanelWindow : Window
         {
             Owner = this
         };
-        dialog.ShowDialog();
+        dialog.ReportProgress(_lastUpdateProgress);
+        _openUpdateDialog = dialog;
+        try
+        {
+            dialog.ShowDialog();
+        }
+        finally
+        {
+            _openUpdateDialog = null;
+        }
     }
 
     private async void OnSkipVersion(object sender, RoutedEventArgs e)
