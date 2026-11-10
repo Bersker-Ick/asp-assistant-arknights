@@ -701,7 +701,10 @@ public class ThemeAndHighlightTests
         }) { IsBackground = true };
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        thread.Join(TimeSpan.FromSeconds(30)).Should().BeTrue("WPF layout should finish without blocking");
+        // 30 秒的旧上限在较慢的 CI runner（Windows Server 2022）上会被触碰：
+        // 本地约 16～27 秒完成，云端同一步超过 30 秒而误判为阻塞。放宽到 180 秒，
+        // 仍能在真正死锁时失败，只是判定更宽松。
+        thread.Join(TimeSpan.FromSeconds(180)).Should().BeTrue("WPF layout should finish without blocking");
         if (failure is not null) ExceptionDispatchInfo.Capture(failure).Throw();
     }
 
