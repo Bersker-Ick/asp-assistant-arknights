@@ -75,9 +75,14 @@ public class CovenantCalculator
 
                 foreach (var add in op.AdditionalCovenants)
                     Add(counts, add, 1);
+
+                if (_coreCovenantSet.Contains(slot.TransformedCovenant))
+                    slotCore.Add(slot.TransformedCovenant);
+                else if (!string.IsNullOrEmpty(slot.TransformedCovenant)
+                    && !slotCore.Contains(slot.TransformedCovenant)
+                    && !op.AdditionalCovenants.Contains(slot.TransformedCovenant))
+                    Add(counts, slot.TransformedCovenant, 1);
             }
-            if (!string.IsNullOrEmpty(slot.TransformedCovenant))
-                Add(counts, slot.TransformedCovenant, 1);
             perSlotCoreCovenants.Add(slotCore);
         }
 

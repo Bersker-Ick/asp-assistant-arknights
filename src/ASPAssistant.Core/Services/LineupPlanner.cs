@@ -188,7 +188,11 @@ public sealed class LineupPlanner
                     harmony++;
                     if (counts.ContainsKey(CovenantCalculator.HarmonyCovenant)) counts[CovenantCalculator.HarmonyCovenant]++;
                 }
-                if (tr.TryGetValue(i, out var t) && counts.ContainsKey(t)) counts[t]++;
+                if (tr.TryGetValue(i, out var t))
+                {
+                    if (counts.ContainsKey(t)) counts[t]++;
+                    present.Add(t);
+                }
             }
             var bonus = new Dictionary<string, int>(StringComparer.Ordinal);
             if (harmony > 0)
@@ -202,8 +206,17 @@ public sealed class LineupPlanner
 
         private bool Done => _found.Count >= _maxResults || _nodes > _maxNodes;
 
+        private int TransformDeficit(PlannerGoal goal, Dictionary<string, int> counts)
+        {
+            var deficit = Math.Max(0, goal.Count - counts[goal.Name]);
+            return goal.IsCore && counts[goal.Name] == 0 && deficit > 0
+                ? Math.Max(1, deficit - _picked.Count(i => _harmony[i]))
+                : deficit;
+        }
+
         private bool Contributes(int i, PlannerGoal g, Dictionary<string, int> counts)
-            => _native[i].Contains(g.Name) || (g.IsCore && _harmony[i] && counts[g.Name] > 0);
+            => _native[i].Contains(g.Name) || (g.IsCore && _harmony[i]
+                && (counts[g.Name] > 0 || _transforms > 0 && _allowed.Contains(g.Name)));
 
         private void Visit()
         {
@@ -218,7 +231,7 @@ public sealed class LineupPlanner
             var trLeft = _transforms;
 
             // Remaining deficits fit into the transforms: try to finish here.
-            var transformDeficit = missing.Sum(g => g.Count - counts[g.Name]);
+            var transformDeficit = missing.Sum(g => TransformDeficit(g, counts));
             if (missing.All(g => _allowed.Contains(g.Name)) && transformDeficit <= trLeft)
             {
                 if (TryFinish(counts)) return;
@@ -272,7 +285,7 @@ public sealed class LineupPlanner
             var totalDeficit = 0;
             foreach (var g in missing)
             {
-                var deficit = g.Count - counts[g.Name];
+                var deficit = TransformDeficit(g, counts);
                 totalDeficit += deficit;
                 var reach = Math.Min(slots, unusedNative.GetValueOrDefault(g.Name));
                 if (_allowed.Contains(g.Name)) reach += trLeft;
@@ -314,7 +327,7 @@ public sealed class LineupPlanner
 
             foreach (var g in _request.Goals)
             {
-                var deficit = g.Count - nativeCounts[g.Name];
+                var deficit = TransformDeficit(g, nativeCounts);
                 for (var k = 0; k < deficit; k++)
                 {
                     if (tr.Count >= _transforms || !_allowed.Contains(g.Name)) return false;
