@@ -120,7 +120,7 @@ public class UpdateServiceTests
         script.Should().Contain("Rename-Item -LiteralPath $backupDir -NewName");
         script.Should().Contain("Start-OldVersion");
         // 成功后启动新版并清理备份
-        script.Should().Contain("Start-Process -FilePath $exePath");
+        script.Should().Contain("Start-Version $exePath");
         script.Should().Contain("Remove-Item -LiteralPath $backupDir");
         // 日志与失败提示
         script.Should().Contain("'C:\\tmp\\update.log'");
@@ -132,7 +132,7 @@ public class UpdateServiceTests
     }
 
     [Fact]
-    public void UpdateScript_RetriesRenameAndFallsBackToFileOverlay()
+    public void UpdateScript_RetriesRenameAndPreservesOldFilesWhenLocked()
     {
         var script = UpdateService.BuildUpdateScript(
             1, @"C:\tmp\src", @"D:\apps\app", @"D:\apps\app\ASPAssistant.App.exe",
@@ -141,11 +141,10 @@ public class UpdateServiceTests
         // 改名最多重试 10 次，每次 500ms
         script.Should().Contain("for ($try = 1; $try -le 10; $try++)");
         script.Should().Contain("rename attempt $try failed");
-        // 仍被占用时退化为文件级覆盖，而不是直接报“无法重命名”
-        script.Should().Contain("falling back to file overlay");
-        script.Should().Contain("Copy-Item -LiteralPath $_.FullName -Destination $target -Force");
-        script.Should().Contain("overlay copied=");
-        // 有文件仍被占用时的中文提示
+        // 不逐文件覆盖：某个 DLL 被占用时不能留下半新半旧的安装目录。
+        script.Should().NotContain("falling back to file overlay");
+        script.Should().NotContain("Copy-Item -LiteralPath $_.FullName -Destination $target -Force");
+        script.Should().Contain("未替换任何旧版文件");
         script.Should().Contain("请完全退出辅助（含托盘图标）后重新检查更新");
     }
 

@@ -34,7 +34,7 @@
 
 ASP Assistant · Arknights 是运行于《明日方舟》游戏窗口旁的侧边辅助工具，提供干员、装备查询，追踪列表、阵容管理与 Ban 位录入。
 
-当前版本为 **v1.3.1**，新增阵容编辑器与分享链接、追踪装备详情、手动检查更新，并把敌人资料刷新为 10 首领 / 9 特训类型 / 93 变体（含缺失图标）。旧版用户可从本仓库 Releases 更新。
+当前版本为 **v1.4.0**，新增阵容策略、侧边栏自由移动与位置重置，适配系统缩放，并修复干员筛选重置和自动更新问题。旧版用户可从本仓库 Releases 更新。
 
 ### 干员浏览与筛选
 
@@ -116,12 +116,12 @@ ASP Assistant · Arknights 是运行于《明日方舟》游戏窗口旁的侧�
 
 无需编译的 Windows x64 独立运行包可在 [Releases](https://github.com/bingyunhe/asp-assistant-arknights/releases/latest) 获取。
 
-1. 下载 `ASPAssistant-v1.3.1-win-x64.zip`，不要选择 `Source code` 源码压缩包。
+1. 下载 `ASPAssistant-v1.4.0-win-x64.zip`，不要选择 `Source code` 源码压缩包。
 2. 右键“全部解压”到独立目录，保留全部文件和 `data`、`runtimes` 文件夹。
 3. 双击 `ASPAssistant.App.exe` 启动。无需另外安装 .NET；包内带有识别模型和所需运行库。
 4. 更新时先退出旧程序，再解压新版。个人追踪与阵容设置存放于本机用户数据目录。
 
-发布页同时提供 `SHA256SUMS.txt`，可用 `Get-FileHash .\ASPAssistant-v1.3.1-win-x64.zip -Algorithm SHA256` 核对下载完整性。详细说明见 [本版发行说明](RELEASE_NOTES.md)。
+发布页同时提供 `SHA256SUMS.txt`，可用 `Get-FileHash .\ASPAssistant-v1.4.0-win-x64.zip -Algorithm SHA256` 核对下载完整性。详细说明见 [本版发行说明](RELEASE_NOTES.md)。
 
 如果需要从源码构建：
 
