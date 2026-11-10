@@ -334,7 +334,7 @@ public class UpdateScriptExecutionTests
         for (int attempt = 0; ; attempt++)
         {
             try { Directory.Delete(path, true); return; }
-            catch (IOException) when (attempt < 20) { Thread.Sleep(100); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException && attempt < 20) { Thread.Sleep(100); }
         }
     }
 }
