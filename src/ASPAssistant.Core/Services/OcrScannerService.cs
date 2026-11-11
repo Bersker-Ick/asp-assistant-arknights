@@ -1,4 +1,4 @@
-﻿// Modified for ASP Assistant Regulation on 2026-11-09; see NOTICE.
+﻿// Modified for ASP Assistant Regulation on 2026-11-11; see NOTICE.
 using System.Threading.Channels;
 using System.Timers;
 using ASPAssistant.Core.GameModes;
@@ -10,6 +10,7 @@ namespace ASPAssistant.Core.Services;
 public class OcrScannerService : IDisposable
 {
     private readonly Func<byte[]?> _captureScreen;
+    private readonly Func<GameConnectionService>? _getConnection;
     private readonly IOcrStrategy _ocrStrategy;
     private readonly ShopReader _shopReader;
     private readonly IOcrEngine _ocrEngine;
@@ -30,7 +31,8 @@ public class OcrScannerService : IDisposable
 
     // Ban screen detection state machine.
     private bool _banScreenActive;
-    private readonly InformationScreenState _informationState = new();
+    private InformationScreenState _informationState = new();
+    private GameConnectionService? _lastConnection;
     private readonly InformationScreenDetector _informationDetector;
     private int _banScreenAbsentTicks;
     private volatile bool _pauseBanScreenDetection;
@@ -70,9 +72,11 @@ public class OcrScannerService : IDisposable
         IReadOnlyList<string> shopNames,
         Func<IReadOnlyList<(string Name, IReadOnlyList<string> CoreCovenants, IReadOnlyList<string> AdditionalCovenants, IReadOnlyList<string> TemplateNames)>>? getAllOperators = null,
         MaaBanIconMatcher? iconMatcher = null,
-        int intervalMs = 3000)
+        int intervalMs = 3000,
+        Func<GameConnectionService>? getConnection = null)
     {
         _captureScreen = captureScreen;
+        _getConnection = getConnection;
         _ocrStrategy = ocrStrategy;
         _shopReader = shopReader;
         _ocrEngine = ocrEngine;
@@ -121,12 +125,27 @@ public class OcrScannerService : IDisposable
 
         try
         {
+            var connection = _getConnection?.Invoke();
+            if (!ReferenceEquals(connection, _lastConnection))
+            {
+                _lastConnection = connection;
+                _stabilizer.Reset();
+                _informationState = new InformationScreenState();
+                _banScreenActive = false;
+                _banScreenAbsentTicks = 0;
+                _gameState.ShopItems = [];
+                GameStateUpdated?.Invoke(_gameState);
+            }
             var screenshot = _captureScreen();
+            if (!ReferenceEquals(connection, _getConnection?.Invoke())) return;
             if (screenshot == null)
             {
                 _informationState.Suspend();
-                // 切换到辅助窗口时暂时无法截图，保留最后一次识别供追踪切换使用。
-                _stabilizer.Reset();
+                if (connection?.IsAdb == true)
+                    PublishShopItems([]);
+                else
+                    // 切换到辅助窗口时暂时无法截图，保留最后一次识别供追踪切换使用。
+                    _stabilizer.Reset();
                 return;
             }
 
@@ -141,7 +160,9 @@ public class OcrScannerService : IDisposable
             // Ban screen detection runs every tick unless explicitly paused
             // (e.g. when app-owned overlays cover the game window).
             if (!_pauseBanScreenDetection)
-                await DetectBanScreenAsync(screenshot, imgWidth, imgHeight);
+                await DetectBanScreenAsync(screenshot, imgWidth, imgHeight, connection);
+
+            if (!ReferenceEquals(connection, _getConnection?.Invoke())) return;
 
             if (_pauseBanScreenDetection || _banScreenActive)
             {
@@ -150,6 +171,7 @@ public class OcrScannerService : IDisposable
             }
 
             var rawItems = await _shopReader.ReadAsync(screenshot, imgWidth, imgHeight, _shopNames);
+            if (!ReferenceEquals(connection, _getConnection?.Invoke())) return;
             PublishShopItems(rawItems);
         }
         catch (Exception ex)
@@ -341,12 +363,12 @@ public class OcrScannerService : IDisposable
     /// <summary>Successful manual recording also consumes this opening screen.</summary>
     public void MarkInformationRecorded() => _informationState.MarkRecorded();
 
-    private async Task DetectBanScreenAsync(byte[] screenshot, int width, int height)
+    private async Task DetectBanScreenAsync(byte[] screenshot, int width, int height, GameConnectionService? connection)
     {
         bool opening = await _informationDetector.IsOpeningScreenAsync(screenshot, width, height);
         bool gameplay = !opening && _informationState.IsConsumed
             && await _informationDetector.IsGameplayAsync(screenshot, width, height);
-        if (_pauseBanScreenDetection) return;
+        if (_pauseBanScreenDetection || !ReferenceEquals(connection, _getConnection?.Invoke())) return;
 
         if (opening)
         {
