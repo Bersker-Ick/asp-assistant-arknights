@@ -9,12 +9,12 @@ namespace ASPAssistant.Core.Services;
 
 public class OcrScannerService : IDisposable
 {
-    private readonly ScreenCaptureService _captureService;
+    private readonly Func<byte[]?> _captureScreen;
     private readonly IOcrStrategy _ocrStrategy;
     private readonly ShopReader _shopReader;
     private readonly IOcrEngine _ocrEngine;
     private readonly GameState.GameState _gameState;
-    private readonly Func<IReadOnlyList<string>> _getTrackedNames;
+    private readonly IReadOnlyList<string> _shopNames;
     private readonly Func<IReadOnlyList<(string Name, IReadOnlyList<string> CoreCovenants, IReadOnlyList<string> AdditionalCovenants, IReadOnlyList<string> TemplateNames)>>? _getAllOperators;
     private readonly MaaBanIconMatcher? _iconMatcher;
     private readonly Timer _scanTimer;
@@ -62,23 +62,23 @@ public class OcrScannerService : IDisposable
     public event Action<int>? ManualScanQueueChanged;
 
     public OcrScannerService(
-        ScreenCaptureService captureService,
+        Func<byte[]?> captureScreen,
         IOcrStrategy ocrStrategy,
         ShopReader shopReader,
         IOcrEngine ocrEngine,
         GameState.GameState gameState,
-        Func<IReadOnlyList<string>> getTrackedNames,
+        IReadOnlyList<string> shopNames,
         Func<IReadOnlyList<(string Name, IReadOnlyList<string> CoreCovenants, IReadOnlyList<string> AdditionalCovenants, IReadOnlyList<string> TemplateNames)>>? getAllOperators = null,
         MaaBanIconMatcher? iconMatcher = null,
         int intervalMs = 3000)
     {
-        _captureService = captureService;
+        _captureScreen = captureScreen;
         _ocrStrategy = ocrStrategy;
         _shopReader = shopReader;
         _ocrEngine = ocrEngine;
         _informationDetector = new InformationScreenDetector(ocrEngine, ocrStrategy);
         _gameState = gameState;
-        _getTrackedNames = getTrackedNames;
+        _shopNames = shopNames;
         _getAllOperators = getAllOperators;
         _iconMatcher = iconMatcher;
         _scanTimer = new Timer(intervalMs);
@@ -109,7 +109,11 @@ public class OcrScannerService : IDisposable
         AppLogger.Info("BanScreen", $"Ban screen detection paused={paused}");
     }
 
-    private async void OnScanTick(object? sender, ElapsedEventArgs e)
+    private async void OnScanTick(object? sender, ElapsedEventArgs e) => await ScanAsync();
+
+    public Task ScanNowAsync() => Task.Run(ScanAsync);
+
+    private async Task ScanAsync()
     {
         // Skip if a previous scan is still running.
         if (Interlocked.CompareExchange(ref _scanning, 1, 0) != 0)
@@ -117,11 +121,12 @@ public class OcrScannerService : IDisposable
 
         try
         {
-            var screenshot = _captureService.CaptureScreen();
+            var screenshot = _captureScreen();
             if (screenshot == null)
             {
                 _informationState.Suspend();
-                PublishShopItems([]);
+                // 切换到辅助窗口时暂时无法截图，保留最后一次识别供追踪切换使用。
+                _stabilizer.Reset();
                 return;
             }
 
@@ -144,7 +149,7 @@ public class OcrScannerService : IDisposable
                 return;
             }
 
-            var rawItems = await _shopReader.ReadAsync(screenshot, imgWidth, imgHeight, _getTrackedNames());
+            var rawItems = await _shopReader.ReadAsync(screenshot, imgWidth, imgHeight, _shopNames);
             PublishShopItems(rawItems);
         }
         catch (Exception ex)
@@ -173,7 +178,7 @@ public class OcrScannerService : IDisposable
     /// </summary>
     public void EnqueueManualScan()
     {
-        var screenshot = _captureService.CaptureScreen();
+        var screenshot = _captureScreen();
         if (screenshot == null)
         {
             AppLogger.Warn("OcrScanner", "EnqueueManualScan: screenshot capture returned null");

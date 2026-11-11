@@ -9,6 +9,7 @@
     <UserControl.Resources>
         <converters:TrackedOperatorConverter x:Key="TrackedOperator" />
         <converters:TrackedEquipmentConverter x:Key="TrackedEquipment" />
+        <converters:TrackedTransformationsConverter x:Key="TrackedTransformations" />
         <DataTemplate DataType="{x:Type models:Equipment}">
             <controls:TrackedEquipmentCard TrackingToggled="OnTrackedEquipmentToggled" />
         </DataTemplate>
@@ -102,14 +103,34 @@
                                             </MultiBinding>
                                         </ContentControl.Content>
                                     </ContentControl>
-                                    <Button Content="{Binding TransformedCovenant}" ContentStringFormat="转职：{0} ✕"
-                                            Click="OnClearPlannedTransformation"
-                                            HorizontalAlignment="Left" Margin="4,0,0,6"
-                                            ToolTip="取消此干员的计划转职，仅修改追踪列表。同名干员采用最近追踪阵容的转职计划。">
+                                    <ItemsControl>
+                                        <ItemsControl.ItemsSource>
+                                            <MultiBinding Converter="{StaticResource TrackedTransformations}">
+                                                <Binding />
+                                                <Binding Path="EquipmentRules" RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                                            </MultiBinding>
+                                        </ItemsControl.ItemsSource>
+                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Content="{Binding Covenant}" ContentStringFormat="转职：{0} ✕"
+                                                        Click="OnClearPlannedTransformation"
+                                                        Tag="{Binding DataContext.Name, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        HorizontalAlignment="Left" Margin="4,0,0,6"
+                                                        ToolTip="{Binding EquipmentName}" Style="{StaticResource SmallActionButton}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <Button Content="{Binding TransformedCovenant}" ContentStringFormat="清除旧转职：{0}"
+                                            Click="OnClearLegacyTransformation" HorizontalAlignment="Left"
+                                            ToolTip="此旧转职没有对应装备，可清除后重新设置">
                                         <Button.Style>
                                             <Style TargetType="Button" BasedOn="{StaticResource SmallActionButton}">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding TransformedCovenant}" Value="">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding TransformedCovenant}" Value="{x:Null}">
                                                         <Setter Property="Visibility" Value="Collapsed" />
                                                     </DataTrigger>
                                                 </Style.Triggers>

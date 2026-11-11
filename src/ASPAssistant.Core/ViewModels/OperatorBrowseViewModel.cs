@@ -55,14 +55,19 @@ public partial class OperatorBrowseViewModel : ObservableObject
     private IReadOnlySet<string> _highlightedCovenants = new HashSet<string>();
 
     [ObservableProperty]
+    private bool _onlyCurrentRun;
+
+    public bool HasRunInfo => HighlightedCovenants.Count > 0;
+
+    [ObservableProperty]
     private string? _selectedTraitTypeFilter;
 
     [ObservableProperty]
     private string? _selectedTriggerTimingFilter;
 
     public List<int?> AvailableTiers { get; private set; } = [];
-    public List<string?> AvailableCoreCovenants { get; private set; } = [];
-    public List<string?> AvailableOtherCovenants { get; private set; } = [];
+    public ObservableCollection<string?> AvailableCoreCovenants { get; private set; } = [];
+    public ObservableCollection<string?> AvailableOtherCovenants { get; private set; } = [];
     public List<string?> AvailableTraitTypes { get; private set; } = [];
     public List<string?> AvailableTriggerTimings { get; private set; } = [];
 
@@ -162,6 +167,37 @@ public partial class OperatorBrowseViewModel : ObservableObject
 
     public void ClearCovenantHighlights()
         => HighlightedCovenants = new HashSet<string>();
+
+    partial void OnHighlightedCovenantsChanged(IReadOnlySet<string> value)
+    {
+        if (value.Count == 0) OnlyCurrentRun = false;
+        OnPropertyChanged(nameof(HasRunInfo));
+        RefreshCovenantChoices();
+    }
+
+    partial void OnOnlyCurrentRunChanged(bool value) => RefreshCovenantChoices();
+
+    private void RefreshCovenantChoices()
+    {
+        var core = _allOperators.SelectMany(o => o.CoreCovenants).Where(c => c.Length > 0).ToHashSet();
+        var other = _allOperators.SelectMany(o => o.AdditionalCovenants).Where(c => c.Length > 0 && !core.Contains(c));
+        UpdateChoices(AvailableCoreCovenants, ["", .. core.Where(c => !OnlyCurrentRun || HighlightedCovenants.Contains(c)).Order()]);
+        UpdateChoices(AvailableOtherCovenants, ["", .. other.Where(c => !OnlyCurrentRun || HighlightedCovenants.Contains(c)).Distinct().Order()]);
+        _selectedCoreCovenantFilters.RemoveWhere(c => !AvailableCoreCovenants.Contains(c));
+        _selectedOtherCovenantFilters.RemoveWhere(c => !AvailableOtherCovenants.Contains(c));
+        ApplyFilters();
+    }
+
+    private static void UpdateChoices(ObservableCollection<string?> choices, List<string?> wanted)
+    {
+        foreach (var item in choices.Where(c => !wanted.Contains(c)).ToList()) choices.Remove(item);
+        for (var i = 0; i < wanted.Count; i++)
+        {
+            var oldIndex = choices.IndexOf(wanted[i]);
+            if (oldIndex < 0) choices.Insert(i, wanted[i]);
+            else if (oldIndex != i) choices.Move(oldIndex, i);
+        }
+    }
 
     partial void OnSearchTextChanged(string value) => ApplyFilters();
     partial void OnCoreCovenantMatchAllChanged(bool value) => ApplyFilters();

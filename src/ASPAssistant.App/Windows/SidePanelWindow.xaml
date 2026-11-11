@@ -16,15 +16,28 @@
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="0" ResizeBorderThickness="5" GlassFrameThickness="0" />
     </WindowChrome.WindowChrome>
-    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+    <Border Background="{DynamicResource PanelBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
         <DockPanel>
             <!-- Custom title bar -->
             <Border DockPanel.Dock="Top" Background="{DynamicResource TitleBackgroundBrush}" MouseLeftButtonDown="OnTitleBarDrag">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                        <Button x:Name="SettingsButton" Click="OnToggleSettings" Content="⚙"
-                                AutomationProperties.Name="设置" ToolTip="设置"
-                                Style="{StaticResource TitleBarButton}" />
+                        <Button x:Name="SettingsButton" Click="OnToggleSettings"
+                                AutomationProperties.Name="设置" ToolTip="设置">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource TitleBarButton}">
+                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Visibility, ElementName=SettingsPanel}" Value="Visible">
+                                            <Setter Property="Background" Value="{DynamicResource AccentTintBrush}" />
+                                            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <Path Width="17" Height="17" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  Data="F0 M10,1 L14,1 14.6,4.1 17,5.5 20,4.5 22,8 19.6,10.1 19.6,13 22,15 20,18.5 17,17.5 14.6,19 14,22 10,22 9.4,19 7,17.5 4,18.5 2,15 4.4,13 4.4,10.1 2,8 4,4.5 7,5.5 9.4,4.1 Z M12,7 A4.5,4.5 0 1 0 12,16 A4.5,4.5 0 1 0 12,7 Z" />
+                        </Button>
                         <Button Content="─" Click="OnMinimize"
                                 Style="{StaticResource TitleBarButton}" />
                         <Button Content="✕" Click="OnClose"

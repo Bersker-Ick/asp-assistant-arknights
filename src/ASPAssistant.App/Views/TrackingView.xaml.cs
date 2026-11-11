@@ -31,6 +31,9 @@ public partial class TrackingView : UserControl
     private INotifyCollectionChanged? _operators;
     private INotifyCollectionChanged? _equipment;
     private CovenantCalculator? _calculator;
+    public static readonly DependencyProperty EquipmentRulesProperty = DependencyProperty.Register(
+        nameof(EquipmentRules), typeof(LineupEquipmentService), typeof(TrackingView));
+    public LineupEquipmentService EquipmentRules => (LineupEquipmentService)GetValue(EquipmentRulesProperty);
 
     public TrackingView()
     {
@@ -47,6 +50,7 @@ public partial class TrackingView : UserControl
     public void SetCovenantCalculator(CovenantCalculator calculator)
     {
         _calculator = calculator;
+        SetValue(EquipmentRulesProperty, calculator.EquipmentRules);
         RefreshSummary();
     }
 
@@ -90,7 +94,7 @@ public partial class TrackingView : UserControl
         {
             Slots = operators.Select(e => new LineupSlot
             {
-                OperatorName = e.Name, TransformedCovenant = e.TransformedCovenant
+                OperatorName = e.Name, Equipments = e.Equipments, IsElite = e.IsElite
             }).ToList()
         };
         var tally = (_calculator?.Compute(lineup) ?? []).Where(s => s.Count > 0)
@@ -101,7 +105,13 @@ public partial class TrackingView : UserControl
     }
 
     private void OnClearPlannedTransformation(object sender, RoutedEventArgs e)
-        => _vm!.ClearPlannedTransformation(((TrackingEntry)((Button)sender).DataContext).Name);
+    {
+        var button = (Button)sender;
+        _vm!.ClearPlannedTransformation((string)button.Tag, ((EquipmentTransformation)button.DataContext).EquipmentName, EquipmentRules);
+    }
+
+    private void OnClearLegacyTransformation(object sender, RoutedEventArgs e)
+        => _vm!.ClearPlannedTransformation(((TrackingEntry)((Button)sender).DataContext).Name, "", EquipmentRules);
 
     public void SetEquipment(IReadOnlyList<Equipment> equipment)
         => SetValue(EquipmentDatabaseProperty, equipment.ToDictionary(e => e.Name));

@@ -19,6 +19,7 @@ public partial class OperatorBrowseView : UserControl
 
     public Func<string, bool>? IsBannedCheck { get; set; }
     public event Action? ClearBansRequested;
+    public event Action? ClearRunRequested;
     public event Action? ManualScanRequested;
 
     public OperatorBrowseView()
@@ -110,8 +111,7 @@ public partial class OperatorBrowseView : UserControl
 
     private void OnClearHighlightsClicked(object sender, RoutedEventArgs e)
     {
-        if (DataContext is OperatorBrowseViewModel vm)
-            vm.ClearCovenantHighlights();
+        ClearRunRequested?.Invoke();
     }
 
     private void OnManualScanClicked(object sender, RoutedEventArgs e)

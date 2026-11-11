@@ -15,7 +15,9 @@ public class RegulationDataTests
     {
         var operators = await _store.LoadOperatorsAsync();
 
-        operators.Should().HaveCount(141);
+        operators.Should().HaveCount(142);
+        operators.Count(o => o.RequiredStrategyId.Length == 0).Should().Be(141);
+        operators.Single(o => o.Name == "“暴躁铁皮”").RequiredStrategyId.Should().Be("band_mech");
         operators.Should().OnlyHaveUniqueItems(o => o.Name);
         operators.Single(o => o.Name == "塔露拉").CoreCovenants.Should().Contain("乌萨斯");
         operators.Single(o => o.Name == "车尔尼").CoreCovenants.Should().Contain("莱塔尼亚");

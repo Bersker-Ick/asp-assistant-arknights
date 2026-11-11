@@ -150,21 +150,26 @@
                     <WrapPanel DockPanel.Dock="Right" Margin="6,0,0,0">
                         <Button x:Name="ResetFiltersButton" Content="重置筛选" Style="{StaticResource SmallActionButton}"
                                 Margin="4,0,0,0" ToolTip="把所有筛选恢复为默认状态" Click="OnResetFiltersClicked" />
-                        <Button x:Name="ClearHighlightsButton" Content="清除高亮" Tag="available" Style="{StaticResource SmallActionButton}"
-                                Margin="4,0,0,0" ToolTip="清除本局可用盟约的高亮" Click="OnClearHighlightsClicked" />
+                        <Button x:Name="ClearHighlightsButton" Content="清除录入" Tag="available" Style="{StaticResource SmallActionButton}"
+                                Margin="4,0,0,0" ToolTip="清除本局盟约录入及规划限制" Click="OnClearHighlightsClicked" />
                         <Button x:Name="ClearBansButton" Content="清除 Ban 位" Tag="danger" Style="{StaticResource SmallActionButton}"
                                 Margin="4,0,0,0" ToolTip="清除本局录入的禁用干员" Click="OnClearBansClicked" />
                     </WrapPanel>
                     <ContentControl Style="{StaticResource FilterGroupHeader}" Margin="0" Content="本局状态" VerticalAlignment="Center" />
                 </DockPanel>
-                <ListBox x:Name="AvailabilityFilterList"
-                         Style="{StaticResource FilterChipListBox}"
-                         Margin="0,0,0,6"
-                         SelectionChanged="OnAvailabilityFilterChanged">
-                    <ListBoxItem Content="全部" />
-                    <ListBoxItem Content="本局可用" />
-                    <ListBoxItem Content="本局不可用" />
-                </ListBox>
+                <DockPanel Margin="0,0,0,6">
+                    <CheckBox x:Name="OnlyCurrentRunToggle" DockPanel.Dock="Right" Content="只看本局"
+                              IsEnabled="{Binding HasRunInfo}" IsChecked="{Binding OnlyCurrentRun}"
+                              VerticalAlignment="Bottom" FontSize="11" Margin="4,0,0,4"
+                              Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <ListBox x:Name="AvailabilityFilterList"
+                             Style="{StaticResource FilterChipListBox}"
+                             SelectionChanged="OnAvailabilityFilterChanged">
+                        <ListBoxItem Content="全部" />
+                        <ListBoxItem Content="本局可用" />
+                        <ListBoxItem Content="本局不可用" />
+                    </ListBox>
+                </DockPanel>
 
                 <ContentControl Style="{StaticResource FilterGroupHeader}" Margin="0,0,0,6" Content="等阶" />
                 <ListBox x:Name="TierFilterList"
