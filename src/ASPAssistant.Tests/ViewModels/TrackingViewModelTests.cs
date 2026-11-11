@@ -140,6 +140,50 @@ public class TrackingViewModelTests
     }
 
     [Fact]
+    public void TrackLineupsOperatorsMergesTeamsAndLeavesEquipmentAlone()
+    {
+        var vm = new TrackingViewModel { TrackMultipleLineups = true };
+        var added = vm.TrackLineupsOperators(
+        [
+            new Lineup { Slots = [new() { OperatorName = "角峰", Equipments = ["不屈弹射器"] }] },
+            new Lineup
+            {
+                Slots =
+                [
+                    new() { OperatorName = "角峰", TransformedCovenant = "炎" },
+                    new() { OperatorName = "隐现", TransformedCovenant = "维多利亚" }
+                ]
+            },
+        ]);
+
+        added.Should().Be(2);
+        vm.TrackedOperators.Select(e => e.Name).Should().Equal("角峰", "隐现");
+        vm.TrackedOperators.Single(e => e.Name == "角峰").TransformedCovenant.Should().Be("炎",
+            "the latest planned transformation wins");
+        vm.TrackedEquipment.Should().BeEmpty("the saved-lineup board tracks operators only");
+        vm.TrackLineupsOperators([]).Should().Be(0);
+    }
+
+    [Fact]
+    public void TrackLineupsOperatorsDefaultModeReplacesExistingTargets()
+    {
+        var vm = new TrackingViewModel();
+        vm.AddTracking("旧干员", TrackingType.Operator);
+        vm.AddTracking("旧装备", TrackingType.Equipment);
+
+        var added = vm.TrackLineupsOperators(
+        [
+            new Lineup { Slots = [new() { OperatorName = "角峰" }] },
+            new Lineup { Slots = [new() { OperatorName = "隐现" }] },
+        ]);
+
+        vm.TrackMultipleLineups.Should().BeFalse();
+        added.Should().Be(2);
+        vm.TrackedOperators.Select(e => e.Name).Should().Equal("角峰", "隐现");
+        vm.TrackedEquipment.Should().BeEmpty();
+    }
+
+    [Fact]
     public void ClearAllTracking_RemovesBothTypesAndKeepsMultipleMode()
     {
         var vm = new TrackingViewModel { TrackMultipleLineups = true };
