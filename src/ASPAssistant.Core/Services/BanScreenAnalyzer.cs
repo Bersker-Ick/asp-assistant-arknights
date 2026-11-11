@@ -62,6 +62,14 @@ public sealed class BanScreenAnalyzer
     public event Action<string>? ShowGameOverlayMessageRequested;
     public event Action? HideGameOverlayMessageRequested;
 
+    /// <summary>
+    /// 本模式目前观测到的（核心, 附加）数量组合：标准 8/10、险境 10/16。
+    /// 新增难度时在这里补一项；未知组合一律不发布，避免把“漏了一整行”的
+    /// 结果当成完整数据去算 ban。
+    /// </summary>
+    private static readonly (int Core, int Additional)[] KnownCovenantCounts =
+        [(8, 10), (10, 16)];
+
     // Re-entry guard: only one analysis can run at a time.
     private int _running;
 
@@ -145,14 +153,21 @@ public sealed class BanScreenAnalyzer
                 _coreCovenantNames, _additionalCovenantNames);
 
             // 标题判定已经包含在上面那次 OCR 里（省掉一次独立的检测调用）；
-            // 只有标题缺失时才用检测器区分“不是信息页”和“信息页被滚动”。
-            if (!read.SawCoreHeader || !read.SawAdditionalHeader)
+            // 只有附加标题缺失时才用检测器区分“不是信息页”和“信息页被滚动”。
+            // 核心标题可以缺失：1080p 下 10/16 需要向下滚动，标题会滑出视口。
+            if (!read.SawAdditionalHeader)
             {
                 var looksLikeInfo = await _informationDetector.IsInformationScreenAsync(shot, imgWidth, imgHeight);
                 AnalysisFailed?.Invoke(looksLikeInfo
                     ? "未找到完整的核心/附加盟约区域，请打开本局信息页并保持面板顶部可见。"
                     : "当前画面不是本局信息页，请切换到“确认本局信息”后重试。");
                 return;
+            }
+
+            if (!read.SawCoreHeader)
+            {
+                AppLogger.Info("BanAnalyzer",
+                    "core header is above the viewport; core band was anchored at the panel top");
             }
             // 两类盟约都可能只显示“本局阵容包含的条目”（标题会注明“部分盟约所含干员阵容
             // 不完整”），所以不能要求与数据文件里的总数相等；真正的完整性判据是：
@@ -163,10 +178,23 @@ public sealed class BanScreenAnalyzer
             var hasAdditional = read.AdditionalSlots > 0
                 ? read.Additional.Count == read.AdditionalSlots
                 : read.Additional.Count >= 4;
+
+            // 槽位与名字相等还不够：整行被漏掉时 4/4 也会相等。
+            var knownPair = KnownCovenantCounts.Contains((read.Core.Count, read.Additional.Count));
+            var noDuplicates = read.Core.Select(c => c.Name).Distinct().Count() == read.Core.Count
+                && read.Additional.Select(c => c.Name).Distinct().Count() == read.Additional.Count;
             var unnamed = read.UnnamedCore.Count + read.UnnamedAdditional.Count;
-            if (!hasCore || !hasAdditional || unnamed > 0)
+            if (!hasCore || !hasAdditional || !knownPair || !noDuplicates || unnamed > 0)
             {
-                AnalysisFailed?.Invoke($"本次信息未完整读出（核心 {read.Core.Count}、附加 {read.Additional.Count}、未命名 {unnamed}），未替换现有结果；请保持页面完整可见后重试。");
+                // 单人页面板比视口高时，最后一行的名字会被画面底边裁掉；
+                // 这是“需要滚动”，不是“页面不对”，提示要能区分。
+                // 高难 10/16 还有另一种表现：附加末行只露出图标顶部、整行没被网格识别，
+                // 于是读成 10/10 且没有“未命名”槽，也要提示滚动而不是笼统报错。
+                var clipped = read.UnnamedAdditional.Any(p => p.Y / imgHeight > 0.88)
+                    || (read.Core.Count == 10 && read.Additional.Count == 10);
+                AnalysisFailed?.Invoke(clipped
+                    ? $"面板底部的盟约行没有完整进入画面（核心 {read.Core.Count}、附加 {read.Additional.Count}），未替换现有结果；请向下滚动到附加盟约最后一行名字可见后重新扫描。"
+                    : $"本次信息未完整读出（核心 {read.Core.Count}、附加 {read.Additional.Count}、未命名 {unnamed}），未替换现有结果；请保持页面完整可见后重试。");
                 return;
             }
             var hasEnemy = enemy is not null && enemy.BossName.Length > 0 && enemy.EnemyTypes.Count > 0;

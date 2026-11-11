@@ -11,7 +11,7 @@ public sealed class InformationScreenDetector(IOcrEngine ocr, IOcrStrategy strat
     /// （1190×410）快约 3–6 倍，识别结论相同。
     /// </summary>
     private static readonly (double X, double Y, double W, double H) CoreHeaderBand = (0.02, 0.13, 0.70, 0.13);
-    private static readonly (double X, double Y, double W, double H) AdditionalHeaderBand = (0.02, 0.38, 0.70, 0.14);
+    private static readonly (double X, double Y, double W, double H) AdditionalHeaderBand = (0.02, 0.36, 0.70, 0.34);
 
     /// <summary>兜底：整块面板一次扫（两条窄带都没命中时才会用到）。</summary>
     private static readonly (double X, double Y, double W, double H) WholePanel = (0.05, 0.13, 0.62, 0.38);
@@ -42,8 +42,12 @@ public sealed class InformationScreenDetector(IOcrEngine ocr, IOcrStrategy strat
         var additionalTask = ScanAsync(screenshot, width, height, additionalBand);
         await Task.WhenAll(coreTask, additionalTask);
 
-        return (await coreTask).Select(t => Normalize(t.Text)).Any(t => t.Contains("核心盟约"))
-            && (await additionalTask).Select(t => Normalize(t.Text)).Any(t => t.Contains("附加盟约"));
+        var core = (await coreTask).FirstOrDefault(t => Normalize(t.Text).Contains("核心盟约"));
+        var additional = (await additionalTask).FirstOrDefault(t => Normalize(t.Text).Contains("附加盟约"));
+
+        // 附加标题在不同布局里可能低到 y≈0.65（单人页），所以带子放宽到 0.36-0.70；
+        // 再用 y 的先后关系排除“只有一个标题命中、另一处误命中”的页面。
+        return core is not null && additional is not null && additional.Box.Y > core.Box.Y;
     }
 
     private Task<IReadOnlyList<OcrTextResult>> ScanAsync(
