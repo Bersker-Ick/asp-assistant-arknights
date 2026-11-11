@@ -585,6 +585,10 @@ public class ThemeAndHighlightTests
                                     trackingVm.TrackedOperators.Select(e => e.Name).Should()
                                         .Contain(targetCovenant.Holders.Select(o => o.Name),
                                             "tracking the selected saved lineup must add all of its late-phase operators");
+                                    trackingVm.HasSourceLineup.Should().BeTrue(
+                                        "a single selected team drives the tracking tab's phase switch");
+                                    trackingVm.SourceLineupName.Should().Be("本局符合阵容");
+                                    trackingVm.SourcePhase.Should().Be(LineupPhase.后期);
                                 }
                                 finally
                                 {
@@ -943,6 +947,41 @@ public class ThemeAndHighlightTests
                                 {
                                     trackingVm.LoadEntries(previousEntries);
                                     trackingVm.TrackMultipleLineups = multipleLineups;
+                                }
+
+                                // 追踪自己的阵容后，可以在前期/中期/后期之间切换追踪目标。
+                                var phaseLineup = new Lineup
+                                {
+                                    Name = "阶段切换阵容",
+                                    EarlySlots = [new() { OperatorName = "角峰" }],
+                                    MidSlots = [new() { OperatorName = "隐现" }],
+                                    Slots = [new() { OperatorName = "灰喉" }],
+                                };
+                                var phaseEntries = trackingVm.AllEntries.ToList();
+                                var phaseMultiple = trackingVm.TrackMultipleLineups;
+                                try
+                                {
+                                    trackingVm.TrackSavedLineup(phaseLineup);
+                                    content.UpdateLayout();
+                                    ((Border)trackingView.FindName("LineupSourcePanel")).Visibility
+                                        .Should().Be(Visibility.Visible);
+                                    ((TextBlock)trackingView.FindName("LineupSourceName")).Text.Should().Be("阶段切换阵容");
+                                    var earlyPhase = (Button)trackingView.FindName("EarlyPhaseButton");
+                                    var latePhase = (Button)trackingView.FindName("LatePhaseButton");
+                                    latePhase.Tag.Should().Be("tracked");
+                                    earlyPhase.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                                    content.UpdateLayout();
+                                    trackingVm.SourcePhase.Should().Be(LineupPhase.前期);
+                                    earlyPhase.Tag.Should().Be("tracked");
+                                    latePhase.Tag.Should().BeNull();
+                                    trackingVm.TrackedOperators.Select(e => e.Name).Should().Contain("角峰");
+                                    trackingVm.TrackedOperators.Select(e => e.Name).Should().NotContain("灰喉");
+                                    Save(content, Path.Combine(output, isLight ? "light-tracking-phase.png" : "dark-tracking-phase.png"));
+                                }
+                                finally
+                                {
+                                    trackingVm.LoadEntries(phaseEntries);
+                                    trackingVm.TrackMultipleLineups = phaseMultiple;
                                 }
                                 sidePanel.Width = 310;
                                 content.Measure(new Size(310, 900));
