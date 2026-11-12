@@ -640,10 +640,19 @@ public class ThemeAndHighlightTests
                                     .Which.Covenants.Should().Contain(c => c.Text.StartsWith(targetCovenant.Covenant.Name + " "));
                                 content.UpdateLayout();
                                 Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
-                                var boardCheck = Descendants<CheckBox>(plannerView)
-                                    .Single(c => c.DataContext is PlannerSavedLineupItem);
-                                boardCheck.IsChecked = true;
+                                var boardCard = Descendants<Border>(plannerView)
+                                    .Single(b => b.Tag as string == "SavedLineupCard");
+                                Descendants<CheckBox>(boardCard).Should().BeEmpty(
+                                    "the whole saved-lineup card is the selection target");
+                                boardCard.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+                                {
+                                    RoutedEvent = UIElement.MouseLeftButtonUpEvent,
+                                });
+                                content.UpdateLayout();
                                 sidePanel.PlannerVm.SelectedMatchingLineupCount.Should().Be(1);
+                                ((SolidColorBrush)boardCard.Background).Color.Should()
+                                    .Be(((SolidColorBrush)application.FindResource("InputBackgroundBrush")).Color,
+                                        "selecting a team uses the darker input background");
                                 var trackSelectedButton = Descendants<Button>(plannerView)
                                     .Single(b => (b.Content as string ?? "").StartsWith("追踪已选阵容"));
                                 trackSelectedButton.IsEnabled.Should().BeTrue();

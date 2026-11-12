@@ -434,7 +434,8 @@
 
         <!-- Saved lineup that survives every covenant ban of the current run; selectable for batch tracking -->
         <DataTemplate x:Key="SavedLineupCardTemplate" DataType="{x:Type vm:PlannerSavedLineupItem}">
-            <Border CornerRadius="10" Padding="9,8" Margin="0,0,0,7"
+            <Border CornerRadius="10" Padding="9,8" Margin="0,0,0,7" Cursor="Hand" Tag="SavedLineupCard"
+                    MouseLeftButtonUp="OnSavedLineupCardClick"
                     ToolTip="{Binding ToolTip}" ToolTipService.InitialShowDelay="400">
                 <Border.Style>
                     <Style TargetType="Border" BasedOn="{StaticResource ItemCardBorder}">
@@ -453,10 +454,7 @@
                                 BorderThickness="1">
                             <TextBlock Text="{Binding Summary}" FontSize="10" Foreground="{DynamicResource SuccessTextBrush}" />
                         </Border>
-                        <CheckBox DockPanel.Dock="Left" IsChecked="{Binding IsSelected}" Focusable="False"
-                                  VerticalAlignment="Center" Margin="0,0,6,0"
-                                  ToolTip="选中后可一次性把整套阵容的干员和装备需求加入追踪" />
-                        <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="Bold" Margin="0,0,6,0"
+                        <TextBlock DockPanel.Dock="Left" Text="{Binding Name}" FontSize="12" FontWeight="Bold" Margin="0,0,6,0"
                                    TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}" />
                     </DockPanel>
                     <ItemsControl ItemsSource="{Binding Operators}" ItemTemplate="{StaticResource SavedLineupOperatorTemplate}" Focusable="False">
