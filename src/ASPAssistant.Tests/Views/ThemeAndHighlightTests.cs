@@ -1328,6 +1328,8 @@ public class ThemeAndHighlightTests
                 {
                     sidePanel.Close();
                 }
+                MinimizableDialogTests.VerifyNestedDialogs();
+                AcquiredTrackingViewTests.Verify();
             }
             catch (Exception ex)
             {

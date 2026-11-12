@@ -635,7 +635,7 @@ public partial class App : Application
         Core.GameState.GameStateUpdater.UpdateShopTracking(
             _lastShopItems, trackingVm.AllEntries.ToList());
         Dispatcher.Invoke(() => _overlay.UpdateShopItems(_lastShopItems));
-        if (_lastShopItems.Count == 0 && trackingVm.AllEntries.Count > 0)
+        if (_lastShopItems.Count == 0 && trackingVm.AllEntries.Any(e => !e.IsAcquired))
             _ = _ocrScanner!.ScanNowAsync();
     }
 

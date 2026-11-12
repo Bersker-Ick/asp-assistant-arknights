@@ -13,6 +13,7 @@ namespace ASPAssistant.App.Views;
 public partial class TrackingView : UserControl
 {
     public event Action<string>? RemoveTrackingRequested;
+    public event Action<string>? ToggleAcquiredRequested;
     public event Action? ClearAllTrackingRequested;
     public static readonly DependencyProperty OperatorDatabaseProperty = DependencyProperty.Register(
         nameof(OperatorDatabase), typeof(IReadOnlyDictionary<string, Operator>), typeof(TrackingView),
@@ -86,13 +87,16 @@ public partial class TrackingView : UserControl
     {
         var operators = _vm?.TrackedOperators.ToList() ?? [];
         var equipmentCount = _vm?.TrackedEquipment.Count ?? 0;
+        var pendingOperators = operators.Where(e => !e.IsAcquired).ToList();
+        PendingOperatorCount.Text = OperatorSectionCount.Text = pendingOperators.Count.ToString();
+        PendingEquipmentCount.Text = EquipmentSectionCount.Text = (_vm?.TrackedEquipment.Count(e => !e.IsAcquired) ?? 0).ToString();
         var empty = operators.Count == 0 && equipmentCount == 0;
         EmptyState.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
         ClearAllButton.Visibility = empty ? Visibility.Collapsed : Visibility.Visible;
 
         var lineup = new Lineup
         {
-            Slots = operators.Select(e => new LineupSlot
+            Slots = pendingOperators.Select(e => new LineupSlot
             {
                 OperatorName = e.Name, Equipments = e.Equipments, IsElite = e.IsElite
             }).ToList()
@@ -127,6 +131,15 @@ public partial class TrackingView : UserControl
         if (e.OriginalSource is OperatorCard { DataContext: Operator op })
             RemoveTrackingRequested?.Invoke(op.Name);
     }
+
+    private void OnTrackedOperatorAcquired(object sender, RoutedEventArgs e)
+        => ToggleAcquiredRequested?.Invoke(((Operator)((OperatorCard)e.OriginalSource).DataContext).Name);
+
+    private void OnTrackedEquipmentAcquired(object sender, RoutedEventArgs e)
+        => ToggleAcquiredRequested?.Invoke(((Equipment)((TrackedEquipmentCard)e.OriginalSource).DataContext).Name);
+
+    private void OnToggleAcquired(object sender, RoutedEventArgs e)
+        => ToggleAcquiredRequested?.Invoke(((TrackingEntry)((Button)sender).DataContext).Name);
 
     private void OnRemoveTracking(object sender, RoutedEventArgs e)
     {

@@ -29,8 +29,8 @@ public partial class TrackingViewModel : ObservableObject
     public (int Operators, int Equipment) TrackLineup(Lineup lineup)
     {
         if (!TrackMultipleLineups) ClearAllTracking();
-        var previousOperators = TrackedOperators.Select(e => e.Name).ToHashSet();
-        var previousEquipment = TrackedEquipment.Select(e => e.Name).ToHashSet();
+        var previousOperators = TrackedOperators.Where(e => !e.IsAcquired).Select(e => e.Name).ToHashSet();
+        var previousEquipment = TrackedEquipment.Where(e => !e.IsAcquired).Select(e => e.Name).ToHashSet();
         foreach (var slot in lineup.Slots.Concat(lineup.MidSlots).Concat(lineup.EarlySlots).Concat(lineup.SupportSlots)
             .DistinctBy(slot => slot.OperatorName))
         {
@@ -43,30 +43,53 @@ public partial class TrackingViewModel : ObservableObject
                     TransformedCovenant = slot.TransformedCovenant, Equipments = [.. slot.Equipments], IsElite = slot.IsElite
                 };
                 if (existing is null) TrackedOperators.Add(entry);
-                else if (existing.TransformedCovenant != slot.TransformedCovenant || existing.IsElite != slot.IsElite
+                else if (existing.IsAcquired || existing.TransformedCovenant != slot.TransformedCovenant || existing.IsElite != slot.IsElite
                     || !existing.Equipments.SequenceEqual(slot.Equipments))
                     TrackedOperators[TrackedOperators.IndexOf(existing)] = entry;
             }
         }
         RefreshEquipmentRequirements();
-        return (TrackedOperators.Count(e => !previousOperators.Contains(e.Name)), TrackedEquipment.Count(e => !previousEquipment.Contains(e.Name)));
+        return (TrackedOperators.Count(e => !e.IsAcquired && !previousOperators.Contains(e.Name)), TrackedEquipment.Count(e => !e.IsAcquired && !previousEquipment.Contains(e.Name)));
     }
 
     public void AddTracking(string name, TrackingType type)
     {
-        if (type == TrackingType.Equipment && TrackedEquipment.FirstOrDefault(e => e.Name == name) is { IsManual: false } automatic)
+        var entries = type == TrackingType.Operator ? TrackedOperators : TrackedEquipment;
+        var existing = entries.FirstOrDefault(e => e.Name == name);
+        if (existing is null)
         {
-            TrackedEquipment[TrackedEquipment.IndexOf(automatic)] = new TrackingEntry { Name = name, Type = type };
+            entries.Add(new TrackingEntry { Name = name, Type = type });
             return;
         }
-        if (IsTracked(name))
-            return;
+        if (!existing.IsAcquired && (type != TrackingType.Equipment || existing.IsManual)) return;
+        entries[entries.IndexOf(existing)] = new TrackingEntry
+        {
+            Name = name, Type = type, TransformedCovenant = existing.TransformedCovenant,
+            Equipments = [.. existing.Equipments], IsElite = existing.IsElite
+        };
+        if (type == TrackingType.Operator) RefreshEquipmentRequirements();
+    }
 
-        var entry = new TrackingEntry { Name = name, Type = type };
-        if (type == TrackingType.Operator)
-            TrackedOperators.Add(entry);
-        else
-            TrackedEquipment.Add(entry);
+    public void ToggleAcquired(string name)
+    {
+        var entries = TrackedOperators.Any(e => e.Name == name) ? TrackedOperators : TrackedEquipment;
+        var entry = entries.Single(e => e.Name == name);
+        if (entry.IsAcquired)
+        {
+            AddTracking(name, entry.Type);
+            return;
+        }
+        entries[entries.IndexOf(entry)] = new TrackingEntry
+        {
+            Name = entry.Name, Type = entry.Type, IsAcquired = true, IsManual = entry.IsManual,
+            TransformedCovenant = entry.TransformedCovenant, Equipments = [.. entry.Equipments], IsElite = entry.IsElite
+        };
+        if (entry.Type == TrackingType.Operator)
+        {
+            RefreshEquipmentRequirements();
+            return;
+        }
+        RemoveEquipmentRequirement(name);
     }
 
     public void RemoveTracking(string name)
@@ -83,13 +106,19 @@ public partial class TrackingViewModel : ObservableObject
         if (eqEntry != null)
         {
             TrackedEquipment.Remove(eqEntry);
-            foreach (var entry in TrackedOperators.Where(e => e.Equipments.Contains(name)).ToList())
-                TrackedOperators[TrackedOperators.IndexOf(entry)] = new TrackingEntry
-                {
-                    Name = entry.Name, Type = TrackingType.Operator, IsElite = entry.IsElite,
-                    TransformedCovenant = entry.TransformedCovenant, Equipments = entry.Equipments.Where(e => e != name).ToList()
-                };
+            RemoveEquipmentRequirement(name);
         }
+    }
+
+    private void RemoveEquipmentRequirement(string name)
+    {
+        foreach (var entry in TrackedOperators.Where(e => e.Equipments.Contains(name)).ToList())
+            TrackedOperators[TrackedOperators.IndexOf(entry)] = new TrackingEntry
+            {
+                Name = entry.Name, Type = TrackingType.Operator, IsElite = entry.IsElite,
+                IsAcquired = entry.IsAcquired, TransformedCovenant = entry.TransformedCovenant,
+                Equipments = entry.Equipments.Where(e => e != name).ToList()
+            };
     }
 
     public void ClearAllTracking()
@@ -109,15 +138,16 @@ public partial class TrackingViewModel : ObservableObject
         }
         TrackedOperators[TrackedOperators.IndexOf(entry)] = new TrackingEntry
         {
-            Name = name, Type = TrackingType.Operator, IsElite = entry.IsElite, Equipments = slot.Equipments
+            Name = name, Type = TrackingType.Operator, IsElite = entry.IsElite, Equipments = slot.Equipments,
+            IsAcquired = entry.IsAcquired
         };
         RefreshEquipmentRequirements();
     }
 
     private void RefreshEquipmentRequirements()
     {
-        var required = TrackedOperators.SelectMany(e => e.Equipments).ToHashSet();
-        foreach (var entry in TrackedEquipment.Where(e => !e.IsManual && !required.Contains(e.Name)).ToList())
+        var required = TrackedOperators.Where(e => !e.IsAcquired).SelectMany(e => e.Equipments).ToHashSet();
+        foreach (var entry in TrackedEquipment.Where(e => !e.IsManual && !e.IsAcquired && !required.Contains(e.Name)).ToList())
             TrackedEquipment.Remove(entry);
         foreach (var name in required)
             if (!TrackedEquipment.Any(e => e.Name == name))
@@ -126,8 +156,8 @@ public partial class TrackingViewModel : ObservableObject
 
     public bool IsTracked(string name)
     {
-        return TrackedOperators.Any(e => e.Name == name)
-            || TrackedEquipment.Any(e => e.Name == name);
+        return TrackedOperators.Any(e => e.Name == name && !e.IsAcquired)
+            || TrackedEquipment.Any(e => e.Name == name && !e.IsAcquired);
     }
 
     public void LoadEntries(List<TrackingEntry> entries)

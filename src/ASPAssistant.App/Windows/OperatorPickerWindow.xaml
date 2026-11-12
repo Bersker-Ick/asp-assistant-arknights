@@ -27,6 +27,8 @@
             <Border DockPanel.Dock="Top" Background="{DynamicResource TitleBackgroundBrush}" MouseLeftButtonDown="OnTitleBarDrag">
                 <DockPanel>
                     <Button DockPanel.Dock="Right" Content="✕" Click="OnCancelClick" Style="{StaticResource CloseButton}" />
+                    <Button x:Name="MinimizeButton" DockPanel.Dock="Right" Content="─" Click="OnMinimize"
+                            ToolTip="最小化" Style="{StaticResource TitleBarButton}" />
                     <TextBlock Text="选择干员" FontSize="13" FontWeight="SemiBold" Padding="12,8" />
                 </DockPanel>
             </Border>

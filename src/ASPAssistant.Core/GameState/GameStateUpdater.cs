@@ -6,7 +6,7 @@ public static class GameStateUpdater
 {
     public static void UpdateShopTracking(List<ShopItem> shopItems, List<TrackingEntry> tracked)
     {
-        var trackedNames = new HashSet<string>(tracked.Select(t => t.Name));
+        var trackedNames = new HashSet<string>(tracked.Where(t => !t.IsAcquired).Select(t => t.Name));
         foreach (var item in shopItems)
             item.IsTracked = trackedNames.Contains(item.Name);
 

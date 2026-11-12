@@ -11,11 +11,13 @@
         <converters:TrackedEquipmentConverter x:Key="TrackedEquipment" />
         <converters:TrackedTransformationsConverter x:Key="TrackedTransformations" />
         <DataTemplate DataType="{x:Type models:Equipment}">
-            <controls:TrackedEquipmentCard TrackingToggled="OnTrackedEquipmentToggled" />
+            <controls:TrackedEquipmentCard TrackingToggled="OnTrackedEquipmentToggled" Acquired="OnTrackedEquipmentAcquired"
+                IsAcquired="{Binding Tag.IsAcquired, RelativeSource={RelativeSource AncestorType=ContentControl}}" />
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type models:Operator}">
-            <controls:OperatorCard IsTrackingList="True" TrackingToggled="OnTrackedOperatorToggled" />
+            <controls:OperatorCard IsTrackingList="True" TrackingToggled="OnTrackedOperatorToggled" Acquired="OnTrackedOperatorAcquired"
+                IsAcquired="{Binding Tag.IsAcquired, RelativeSource={RelativeSource AncestorType=ContentControl}}" />
         </DataTemplate>
 
         <!-- Tracked name that is not in the operator data -->
@@ -25,10 +27,17 @@
                 <DockPanel>
                     <Button DockPanel.Dock="Right" Content="✕" Tag="{Binding Name}" Width="25" Height="25" Padding="0"
                             Style="{StaticResource TrackingButton}" Click="OnRemoveTracking" ToolTip="取消追踪" />
+                    <Button x:Name="AcquireUnknownButton" DockPanel.Dock="Right" Click="OnToggleAcquired"
+                            Style="{StaticResource AcquiredTrackingButton}" />
                     <TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextPrimaryBrush}"
                                FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
                 </DockPanel>
             </Border>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsAcquired}" Value="True">
+                    <Setter TargetName="AcquireUnknownButton" Property="Tag" Value="acquired" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
         </DataTemplate>
     </UserControl.Resources>
 
@@ -41,8 +50,8 @@
                             Style="{StaticResource SmallActionButton}" Click="OnClearAllTracking"
                             ToolTip="清空追踪列表（干员和装备）" />
                     <TextBlock VerticalAlignment="Center" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}">
-                        <Run Text="追踪 " /><Run Text="{Binding TrackedOperators.Count, Mode=OneWay}" FontWeight="Bold"
-                        /><Run Text=" 干员 · " /><Run Text="{Binding TrackedEquipment.Count, Mode=OneWay}" FontWeight="Bold"
+                        <Run Text="追踪 " /><Run x:Name="PendingOperatorCount" FontWeight="Bold"
+                        /><Run Text=" 干员 · " /><Run x:Name="PendingEquipmentCount" FontWeight="Bold"
                         /><Run Text=" 装备" />
                     </TextBlock>
                 </DockPanel>
@@ -88,13 +97,13 @@
                         </Style>
                     </StackPanel.Style>
                     <ContentControl Style="{StaticResource FilterGroupHeader}">
-                        <TextBlock><Run Text="干员 " /><Run Text="{Binding TrackedOperators.Count, Mode=OneWay}" /></TextBlock>
+                        <TextBlock><Run Text="干员 · 待获取 " /><Run x:Name="OperatorSectionCount" /></TextBlock>
                     </ContentControl>
                     <ItemsControl ItemsSource="{Binding TrackedOperators}" Focusable="False">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel>
-                                    <ContentControl Focusable="False">
+                                    <ContentControl Focusable="False" Tag="{Binding}">
                                         <ContentControl.Content>
                                             <MultiBinding Converter="{StaticResource TrackedOperator}" Mode="OneWay">
                                                 <Binding />
@@ -155,12 +164,12 @@
                         </Style>
                     </StackPanel.Style>
                     <ContentControl Style="{StaticResource FilterGroupHeader}">
-                        <TextBlock><Run Text="装备 " /><Run Text="{Binding TrackedEquipment.Count, Mode=OneWay}" /></TextBlock>
+                        <TextBlock><Run Text="装备 · 待获取 " /><Run x:Name="EquipmentSectionCount" /></TextBlock>
                     </ContentControl>
                     <ItemsControl ItemsSource="{Binding TrackedEquipment}" Focusable="False">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <ContentControl Focusable="False">
+                                <ContentControl Focusable="False" Tag="{Binding}">
                                     <ContentControl.Content>
                                         <MultiBinding Converter="{StaticResource TrackedEquipment}" Mode="OneWay">
                                             <Binding />
