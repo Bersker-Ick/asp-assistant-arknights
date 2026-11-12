@@ -381,7 +381,7 @@ public partial class App : Application
         _connectionStatusTimer.Tick += (_, _) => sidePanel.UpdateGameConnectionStatus(captureService.Connection.Status);
         _connectionStatusTimer.Start();
 
-        void UpdateOverlayPosition()
+        void UpdateOverlayPosition(bool refreshShopItems)
         {
             var foreground = Core.Interop.User32.GetForegroundWindow();
             var panelHandle = new System.Windows.Interop.WindowInteropHelper(sidePanel).Handle;
@@ -393,7 +393,8 @@ public partial class App : Application
                 return;
             }
             overlay.UpdatePosition(viewport.Value);
-            overlay.UpdateShopItems(_lastShopItems);
+            if (refreshShopItems)
+                overlay.UpdateShopItems(_lastShopItems);
             overlay.Show();
         }
 
@@ -404,7 +405,7 @@ public partial class App : Application
             {
                 _sidePanel.UpdatePosition(rect, _windowTracker.IsFullscreen);
 
-                UpdateOverlayPosition();
+                UpdateOverlayPosition(refreshShopItems: true);
             });
         };
 
@@ -413,7 +414,7 @@ public partial class App : Application
             Dispatcher.Invoke(() =>
             {
                 _sidePanel.UpdatePosition(rect, _windowTracker.IsFullscreen);
-                UpdateOverlayPosition();
+                UpdateOverlayPosition(refreshShopItems: false);
             });
         };
 
