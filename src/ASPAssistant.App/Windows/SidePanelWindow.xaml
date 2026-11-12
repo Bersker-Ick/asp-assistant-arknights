@@ -51,6 +51,7 @@
                 </DockPanel>
             </Border>
 
+            <DockPanel x:Name="PanelContent">
             <Border x:Name="SettingsPanel" DockPanel.Dock="Top" Visibility="Collapsed"
                     Background="{DynamicResource PanelBackgroundBrush}"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="10,6,10,10">
@@ -280,6 +281,7 @@
                     </Border>
                 </Grid>
             </Grid>
+            </DockPanel>
         </DockPanel>
     </Border>
 </Window>

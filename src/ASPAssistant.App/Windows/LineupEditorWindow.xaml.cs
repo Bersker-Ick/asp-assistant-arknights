@@ -63,6 +63,9 @@ public partial class LineupEditorWindow : Window
             DragMove();
     }
 
+    private void OnMinimize(object sender, RoutedEventArgs e)
+        => WindowState = WindowState.Minimized;
+
     private void OnLineupNameChanged(object sender, TextChangedEventArgs e)
     {
         _vm.Name = LineupNameBox.Text;
@@ -76,13 +79,13 @@ public partial class LineupEditorWindow : Window
             return;
         }
         Result = _vm.ToLineup();
-        DialogResult = true;
+        Close();
     }
 
     private void OnCancelClick(object sender, RoutedEventArgs e)
     {
         Result = null;
-        DialogResult = false;
+        Close();
     }
 
     private void OnResetClick(object sender, RoutedEventArgs e)
@@ -464,16 +467,17 @@ public partial class LineupEditorWindow : Window
         RefreshCovenantPanel();
     }
 
-    private void PickOperator(int slotIndex)
+    private async void PickOperator(int slotIndex)
     {
         var current = _vm.Slots[slotIndex].OperatorName;
         var dlg = new OperatorPickerWindow(_vm.AllOperators, current, _vm.StrategySlots.Select(s => s.StrategyId).ToHashSet())
         {
             Owner = this,
         };
-        if (dlg.ShowDialog() == true)
+        await MinimizableDialog.ShowAsync(dlg, EditorContent);
+        if (dlg.Result is not null)
         {
-            _vm.SetSlotOperator(slotIndex, dlg.Result ?? "");
+            _vm.SetSlotOperator(slotIndex, dlg.Result);
             RefreshEditor();
         }
     }

@@ -97,6 +97,8 @@
                     <TextBlock Text="禁用" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource DangerBrush}" />
                 </Border>
                 <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="AcquiredButton" Style="{StaticResource AcquiredTrackingButton}"
+                            Visibility="Collapsed" Click="OnAcquiredClick" />
                     <Button x:Name="TrackButton" Width="25" Height="25" Padding="0" FontSize="14"
                             Style="{StaticResource TrackingButton}" Click="OnTrackClick" />
                     <Button x:Name="BanButton" Width="25" Height="25" Padding="0" FontSize="12" Margin="4,0,0,0"

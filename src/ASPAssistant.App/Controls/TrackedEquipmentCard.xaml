@@ -48,9 +48,12 @@
                 <TextBlock x:Name="TypeText" VerticalAlignment="Center" Margin="5,0,0,2" FontSize="10" TextWrapping="Wrap"
                            TextAlignment="Right" Foreground="{DynamicResource TextSecondaryBrush}" />
             </WrapPanel>
-            <Button x:Name="TrackButton" Grid.Column="2" Content="✕" Width="25" Height="25" Padding="0" FontSize="14"
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+            <Button x:Name="AcquiredButton" Style="{StaticResource AcquiredTrackingButton}" Click="OnAcquiredClick" />
+            <Button x:Name="TrackButton" Content="✕" Width="25" Height="25" Padding="0" FontSize="14"
                     VerticalAlignment="Center" ToolTip="取消追踪装备"
                     Style="{StaticResource TrackingButton}" Click="OnRemoveClick" />
+            </StackPanel>
         </Grid>
     </Border>
 </UserControl>

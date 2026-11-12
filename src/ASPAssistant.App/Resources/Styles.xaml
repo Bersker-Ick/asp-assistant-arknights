@@ -560,4 +560,20 @@
         </StackPanel>
     </DataTemplate>
 
+    <Style x:Key="AcquiredTrackingButton" TargetType="Button" BasedOn="{StaticResource SmallActionButton}">
+        <Setter Property="Content" Value="已获取" />
+        <Setter Property="Padding" Value="4,0" />
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="Height" Value="25" />
+        <Setter Property="Margin" Value="0,0,4,0" />
+        <Setter Property="ToolTip" Value="标记已获取，停止追踪并保留此行" />
+        <Style.Triggers>
+            <Trigger Property="Tag" Value="acquired">
+                <Setter Property="Foreground" Value="{DynamicResource SuccessTextBrush}" />
+                <Setter Property="Background" Value="{DynamicResource SuccessTintBrush}" />
+                <Setter Property="ToolTip" Value="已获取，点击继续追踪" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
 </ResourceDictionary>
